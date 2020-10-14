@@ -194,7 +194,7 @@ zero=int8(zeros(length(ATT(:,2)),1));
 plt3 = subplot(4,1,3);
 plot(ATT(:,2),ATT(:,4),'b',ATT(:,2),zero,'r:')
 title('Aircraft Pitch Angle vs Time')
-ylabel({'Aircraft Pitch';'Angle (°)'})
+ylabel({'Aircraft Pitch';'Angle (Â°)'})
 ylim([-10 40])
 
 % Altitude plot
@@ -240,7 +240,7 @@ while true
     subplot(4,1,3)
     plot(ATT(:,2),ATT(:,4),'b',ATT(:,2),zero,'r:',x_m,y_pitch,'kx')
     title('Aircraft Pitch Angle vs Time')
-    ylabel({'Aircraft Pitch';'Angle (°)'})
+    ylabel({'Aircraft Pitch';'Angle (Â°)'})
     ylim([-10 40])
     
     % Altitude plot
@@ -282,7 +282,7 @@ zero=int8(zeros(length(ATT(:,2)),1));
 plt3 = subplot(4,1,3);
 plot(ATT(:,2)/1000000,ATT(:,4),'b',ATT(:,2)/1000000,zero,'r:')
 title('Aircraft Pitch Angle vs Time')
-ylabel({'Aircraft Pitch';'Angle (°)'})
+ylabel({'Aircraft Pitch';'Angle (Â°)'})
 ylim([-10 40])
 
 % Altitude plot
@@ -444,8 +444,8 @@ IMU_AccY = IMU(TO_IMU:LND_IMU,7);
 IMU_AccZ = IMU(TO_IMU:LND_IMU,8);
 IMU_time_out = (IMU_time-min(IMU_time))/1000000;
 IMU = [IMU_LN, IMU_time, IMU_time_out, IMU_GyrX, IMU_GyrY, IMU_GyrZ, IMU_AccX, IMU_AccY, IMU_AccZ];
-IMU_label = {'Line No','Time since boot (us)','Time from parse (sec)','X Gyro rotation (°/sec)','Y Gyro rotation (°/sec)','Z Gyro rotation (°/sec)','X Acceleration (°/sec/sec)','Y Acceleration (°/sec/sec)','Z Acceleration (°/sec/sec)'};
-IMU_table = table(IMU_LN,IMU_time,IMU_time_out,IMU_GyrX, IMU_GyrY, IMU_GyrZ, IMU_AccX, IMU_AccY, IMU_AccZ,'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','X Gyro rotation (°/sec)','Y Gyro rotation (°/sec)','Z Gyro rotation (°/sec)','X Acceleration (°/sec/sec)','Y Acceleration (°/sec/sec)','Z Acceleration (°/sec/sec)'});
+IMU_label = {'Line No','Time since boot (us)','Time from parse (sec)','X Gyro rotation (Â°/sec)','Y Gyro rotation (Â°/sec)','Z Gyro rotation (Â°/sec)','X Acceleration (Â°/sec/sec)','Y Acceleration (Â°/sec/sec)','Z Acceleration (Â°/sec/sec)'};
+IMU_table = table(IMU_LN,IMU_time,IMU_time_out,IMU_GyrX, IMU_GyrY, IMU_GyrZ, IMU_AccX, IMU_AccY, IMU_AccZ,'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','X Gyro rotation (Â°/sec)','Y Gyro rotation (Â°/sec)','Z Gyro rotation (Â°/sec)','X Acceleration (Â°/sec/sec)','Y Acceleration (Â°/sec/sec)','Z Acceleration (Â°/sec/sec)'});
 
 % Parsed Pixhawk barometric data
 BARO_LN = BARO(TO_BARO:LND_BARO,1);
@@ -571,7 +571,7 @@ if (strcmpi(iMetValue,'Yes'))
         iM_sat = table2array(iM_sat_temp(:,1));
     end
     
-    iMet_table = table(iM_Pix, iM_date, iM_time, iM_pres, iM_temp, iM_humid, iM_lat, iM_long, iM_alt, iM_sat,'VariableNames',{'Time from Arming (sec)','Date UTC','Time UTC','Barometric Pressure (hPa)','Air Temp (°C)','Relative Humidity (%)','GPS Lat','GPS Long','GPS Alt (m)','Sat Count'});
+    iMet_table = table(iM_Pix, iM_date, iM_time, iM_pres, iM_temp, iM_humid, iM_lat, iM_long, iM_alt, iM_sat,'VariableNames',{'Time from Arming (sec)','Date UTC','Time UTC','Barometric Pressure (hPa)','Air Temp (Â°C)','Relative Humidity (%)','GPS Lat','GPS Long','GPS Alt (m)','Sat Count'});
     save(fullParsedMatFileName,'iMet_table','-append');
 
     fig3=figure('Name','Parsed iMet data.');
@@ -580,7 +580,7 @@ if (strcmpi(iMetValue,'Yes'))
     plt = plot(iM_Pix(:), iM_temp(:),'y-',iM_Pix(:),iM_humid,'c-');
     title('Temp, Humidity, and Pressure vs Time')
     xlabel('Time (ms)');
-    ylabel('Temp (°C) and Humidity (%)');
+    ylabel('Temp (Â°C) and Humidity (%)');
     
     yyaxis right
     plt = plot(iM_Pix(:), iM_pres(:),'k-');
@@ -592,7 +592,7 @@ if (strcmpi(iMetValue,'Yes'))
         baseFileName = sprintf('%s_Parsed_iMet.csv', baseNameNoExtDFL);
         fullOutputMatFileName = fullfile(folderDFL, baseFileName);
         % Create a table with the data and variable names
-        iMet_table = table(iM_Pix, iM_date, iM_time, iM_pres, iM_temp, iM_humid, iM_lat, iM_long, iM_alt, iM_sat,'VariableNames',{'Time from Arming (sec)','Date UTC','Time UTC','Barometric Pressure (hPa)','Air Temp (°C)','Relative Humidity (%)','GPS Lat','GPS Long','GPS Alt (m)','Sat Count'});
+        iMet_table = table(iM_Pix, iM_date, iM_time, iM_pres, iM_temp, iM_humid, iM_lat, iM_long, iM_alt, iM_sat,'VariableNames',{'Time from Arming (sec)','Date UTC','Time UTC','Barometric Pressure (hPa)','Air Temp (Â°C)','Relative Humidity (%)','GPS Lat','GPS Long','GPS Alt (m)','Sat Count'});
         % Write data to text file
         writetable(iMet_table, fullOutputMatFileName);
     end
@@ -786,7 +786,7 @@ if (strcmpi(MHPValue,'Yes') | strcmpi(TPHValue,'Yes'))
     Pix_time_out = (PixData(:,1)-min(PixData(:,1)))/1000;
     
     % Create tables with the data and variable names   
-    TPH_table = table(TPH(:,1),TPH(:,2),TPH_time_out,TH_Date, TH_Time, TPH(:,3),TPH(:,4),TPH(:,5),TPH(:,6),TPH(:,7),TPH(:,8) , 'VariableNames', {'Board Time from PowerUp (msec)','Pixhawk Time from PowerUp (msec)','Pix Time from parse','UTC Date','UTC Time','Temp 1 (°C)','Temp 2 (°C)','Temp 3 (°C)','Humidity 1 (%)','Humidity 2 (%)','Humidity 3 (%)'} );
+    TPH_table = table(TPH(:,1),TPH(:,2),TPH_time_out,TH_Date, TH_Time, TPH(:,3),TPH(:,4),TPH(:,5),TPH(:,6),TPH(:,7),TPH(:,8) , 'VariableNames', {'Board Time from PowerUp (msec)','Pixhawk Time from PowerUp (msec)','Pix Time from parse','UTC Date','UTC Time','Temp 1 (Â°C)','Temp 2 (Â°C)','Temp 3 (Â°C)','Humidity 1 (%)','Humidity 2 (%)','Humidity 3 (%)'} );
     MHP_table = table(MHP(:,1),MHP(:,2),MHP_time_out, MHP_Date, MHP_Time, MHP(:,3),MHP(:,4),MHP(:,5),MHP(:,6),MHP(:,7), 'VariableNames', {'Board Time from PowerUp (msec)','Pix Time from PowerUp (msec)','Pix time from parse','UTC Date','UTC Time','Pitot-Static (m/s)','V (m/s)','U (m/s)','Alpha(deg)','Beta(deg)'} );
     PixData_table = table(PixData(:,1),PixData(:,2),Pix_time_out,PixData(:,3),'VariableNames',{'Sensor board time (ms)','GPS Unix Time (sec)','Pix board time (sec)','Pix board time (ms)'});
     
@@ -812,7 +812,7 @@ if (strcmpi(MHPValue,'Yes') | strcmpi(TPHValue,'Yes'))
         title('Temp and Humidity vs Time')
         legend({'Temp 1','Temp 2', 'Temp 3','Humid 1','Humid 2', 'Humid 3'},'Location','southeast')
         xlabel('Time (sec)');
-        ylabel('Temp (°C) and Humidity (%)');
+        ylabel('Temp (Â°C) and Humidity (%)');
         xlim([(min(TPH(:,2)/1000)) (max(TPH(:,2)/1000))])
         
         if(strcmpi(Sensor_out,'Yes'))
@@ -855,7 +855,7 @@ if (strcmpi(MHPValue,'Yes') | strcmpi(TPHValue,'Yes'))
         title('Temp and Humidity vs Time')
         legend({'Temp 1','Temp 2', 'Temp 3','Humid 1','Humid 2', 'Humid 3'},'Location','southeast')
         xlabel('Time (sec)');
-        ylabel('Temp (°C) and Humidity (%)');
+        ylabel('Temp (Â°C) and Humidity (%)');
         xlim([(min(TPH(:,2)/1000)) (max(TPH(:,2)/1000))])
         
         if(strcmpi(Sensor_out,'Yes'))
@@ -962,7 +962,7 @@ if (strcmpi(graphToggle,'On'))
         plt3 = subplot(5,1,3);
         plot(t_cube,pitchAC,'b',t_cube,zero,'r:')
         title('Aircraft Pitch Angle vs Time')
-        ylabel({'Aircraft Pitch';'Angle (°)'})
+        ylabel({'Aircraft Pitch';'Angle (Â°)'})
         %xticks([150:20:370])
         ylim([-20 50])
 
@@ -987,7 +987,7 @@ if (strcmpi(graphToggle,'On'))
         plt2 = subplot(3,1,2);
         plot(iM_Pix(:),iM_temp(:),'k',iM_Pix(:),iM_humid,'k-',TPH_time_out,TPH(:,6),'r',TPH_time_out,TPH(:,3),'r-',TPH_time_out,TPH(:,7),'b',TPH_time_out,TPH(:,4),'b-',TPH_time_out,TPH(:,8),'g',TPH_time_out,TPH(:,5),'g-');
         title('iMet vs Sensor Package Temperature and Humidity');
-        ylabel({'Temp (°C) and Humidity (%)'});
+        ylabel({'Temp (Â°C) and Humidity (%)'});
         
         plt3 = subplot(3,1,3);
         plot(BARO(:,3),BARO(:,4),'k',iM_Pix(:),iM_pres(:),'r');
@@ -1022,7 +1022,7 @@ if (strcmpi(graphToggle,'On'))
         plt3 = subplot(4,1,3);
         plot(t_cube,pitchAC,'b',t_cube,zero,'r:')
         title('Aircraft Pitch Angle vs Time')
-        ylabel({'Aircraft Pitch';'Angle (°)'})
+        ylabel({'Aircraft Pitch';'Angle (Â°)'})
         ylim([-10 40])
         
         
@@ -1066,7 +1066,7 @@ if (strcmpi(graphToggle,'On'))
         subplot(4,1,3);
         plot(t_cube,pitchAC,'b',t_cube,zero,'r:')
         title('Aircraft Pitch Angle vs Time')
-        ylabel({'Aircraft Pitch';'Angle (°)'})
+        ylabel({'Aircraft Pitch';'Angle (Â°)'})
         xlim([min(t_cube) max(t_cube)])
         ylim([-20 50])
         
@@ -1115,7 +1115,7 @@ if (strcmpi(graphToggle,'On'))
             subplot(4,1,3);
             plot(t_cube,pitchAC,'b',t_cube,zero,'r:',x_n,y_n5,'kx');
             title('Aircraft Pitch Angle vs Time');
-            ylabel({'Aircraft Pitch';'Angle (°)'});
+            ylabel({'Aircraft Pitch';'Angle (Â°)'});
             xlim([min(t_cube) max(t_cube)]);
             ylim([-20 50]);
             
@@ -1147,7 +1147,7 @@ if (strcmpi(graphToggle,'On'))
             fullOutputMatFileName = fullfile(folder, baseFileName);
             % Save file with parsed data as the original filename plus the added portion
             % Create a table with the data and variable names
-            T = table(round(y_n1.',1), round(y_n2.',1), round(y_n3.',1), round(y_n4.',1), round(y_n5.',1), round(y_n6.',1), round(y_n7.',1), round(thrT.',2), round(C_D.',6), round(C_L.',6), round(L_D.',4), 'VariableNames', {'Groundspeed (m/s)','Airspeed (m/s)','Windspeed (m/s)','Throttle (%)','Aircraft Pitch (°)','Altitude (m, AGL)','Pitch PWM','Thrust Output (units of Throttle Curve input file)','C_D','C_L','CD_CL'} )
+            T = table(round(y_n1.',1), round(y_n2.',1), round(y_n3.',1), round(y_n4.',1), round(y_n5.',1), round(y_n6.',1), round(y_n7.',1), round(thrT.',2), round(C_D.',6), round(C_L.',6), round(L_D.',4), 'VariableNames', {'Groundspeed (m/s)','Airspeed (m/s)','Windspeed (m/s)','Throttle (%)','Aircraft Pitch (Â°)','Altitude (m, AGL)','Pitch PWM','Thrust Output (units of Throttle Curve input file)','C_D','C_L','CD_CL'} )
             % Write data to text file
             writetable(T, fullOutputMatFileName)
             
@@ -1184,7 +1184,7 @@ if (strcmpi(graphToggle,'On'))
             fullOutputMatFileName = fullfile(folder, baseFileName);
             % Save file with parsed data as the original filename plus the added portion
             % Create a table with the data and variable names
-            T = table(round(y_n1.',1), round(y_n2.',1), round(y_n3.',1), round(y_n4.',1), round(y_n5.',1), round(y_n6.',1), round(y_n7.',1), round(thrT.',2), round(pitchT.',1), round(C_D.',6), round(C_L.',6), round(L_D.',4), 'VariableNames', {'Groundspeed (m/s)','Airspeed (m/s)','Windspeed (m/s)','Throttle (%)','Aircraft Pitch (°)','Altitude (m, AGL)','Pitch PWM','Thrust Output (units of Throttle Curve input file)','Servo Angular Deflection (°)','C_D','C_L','CD_CL'} )
+            T = table(round(y_n1.',1), round(y_n2.',1), round(y_n3.',1), round(y_n4.',1), round(y_n5.',1), round(y_n6.',1), round(y_n7.',1), round(thrT.',2), round(pitchT.',1), round(C_D.',6), round(C_L.',6), round(L_D.',4), 'VariableNames', {'Groundspeed (m/s)','Airspeed (m/s)','Windspeed (m/s)','Throttle (%)','Aircraft Pitch (Â°)','Altitude (m, AGL)','Pitch PWM','Thrust Output (units of Throttle Curve input file)','Servo Angular Deflection (Â°)','C_D','C_L','CD_CL'} )
             % Write data to text file
             writetable(T, fullOutputMatFileName)
             
