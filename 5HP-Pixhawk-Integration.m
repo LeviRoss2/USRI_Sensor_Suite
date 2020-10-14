@@ -1,33 +1,41 @@
 
+% Pixhawk DFL Analyzer V3.4
+% Created by:    Levi Ross
+% Edited by:     Kyle Hickman, James Brenner
+% Unmanned Systems Research Institute
+% Last Modified: 10/14/2020
+
+%% Clear All Data
 close all
 clear all
 clc
 
-thrMinPWM = 1100;
-thrMaxPWM = 1900;
+%% Initialize User-Defined Content
+thrMinPWM = 1100;              % Default, scales THR% plots
+thrMaxPWM = 1900;              % Default, scales THR% plots
+ 
+graphToggle = 'On';            % Show plots of parsed data
+animateToggle = 'Off';         % Flight animation based on GPS and Alt(AGL)
+ArduPilotType = 'Quad-Plane';  % Quad-Plane, Fixed Wing, Quadcopter
+StateSpace = 'No';             % Pixhawk recorded SS variable output (new file)
+iMetValue = 'Yes';             % Load iMet data
+MHPValue = 'Yes';              % Load 5HP/TPH data (use 5HP)
+TPHValue = 'Yes';              % Load 5HP/TPH data (use TPH)
+Overlay = 'Yes';               % Show iMet & 5HP/TPH alongside Pixhawk data plots
+GPS_out = 'Off';               % Output GPS data as individual file (lat, long, alt)
+Sensor_out = 'No';             % Output parsed sensor data (iMet seperate from 5HP/TPH)
+Attitude_out = 'Off';          % Output parsed attitude data
+SensorCompare = 'Yes';         % Show iMet, 5HP/TPH, and Pixhawk atmoshperic sensors on same plots
+pitchToggle = 'No';            % TIA-Specific
+throttleToggle = 'No';         % TIA-Specific
+Aircraft = 'N/A';              % TIA-Specific
+TVToggle = 'No';               % TIA-Specific
+indvToggle = 'No';             % TIA-Specific
 
-pitchToggle = 'No';
-throttleToggle = 'No';
-graphToggle = 'On';
-TVToggle = 'No';
-indvToggle = 'No';
-animateToggle = 'Off';
-ArduPilotType = 'Quad-Plane';
-StateSpace = 'No';
-iMetValue = 'No';
-MHPValue = 'Yes';
-TPHValue = 'Yes';
-Overlay = 'Yes';
-GPS_out = 'Off';
-Aircraft = 'N/A';
-Sensor_out = 'No';
-Attitude_out = 'Off';
-SensorCompare = 'Yes';
-
-animateSpeed = 10;
-animateHeadSize = 2;
-animateTailWidth = 1;
-animateTailLength = 100;
+animateSpeed = 10;             % Overall speed
+animateHeadSize = 2;           % Icon size
+animateTailWidth = 1;          % Width of tail
+animateTailLength = 100;       % Length of tail
 
 if (strcmpi(pitchToggle,'Yes'))
     
