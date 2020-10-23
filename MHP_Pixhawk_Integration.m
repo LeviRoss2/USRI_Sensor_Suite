@@ -1,9 +1,8 @@
 
 % Pixhawk DFL Analyzer V3.4
 % Created by:    Levi Ross
-% Edited by:     Kyle Hickman, James Brenner
 % Unmanned Systems Research Institute
-% Last Modified: 10/14/2020
+% Last Modified: 6/26/2020
 
 %% Clear All Data
 close all
@@ -18,14 +17,14 @@ graphToggle = 'On';            % Show plots of parsed data
 animateToggle = 'Off';         % Flight animation based on GPS and Alt(AGL)
 ArduPilotType = 'Quad-Plane';  % Quad-Plane, Fixed Wing, Quadcopter
 StateSpace = 'No';             % Pixhawk recorded SS variable output (new file)
-iMetValue = 'Yes';             % Load iMet data
+iMetValue = 'No';             % Load iMet data
 MHPValue = 'Yes';              % Load 5HP/TPH data (use 5HP)
-TPHValue = 'Yes';              % Load 5HP/TPH data (use TPH)
-Overlay = 'Yes';               % Show iMet & 5HP/TPH alongside Pixhawk data plots
-GPS_out = 'Off';               % Output GPS data as individual file (lat, long, alt)
+TPHValue = 'No';              % Load 5HP/TPH data (use TPH)
+Overlay = 'No';               % Show iMet & 5HP/TPH alongside Pixhawk data plots
+GPS_out = 'Yes';               % Output GPS data as individual file (lat, long, alt)
 Sensor_out = 'No';             % Output parsed sensor data (iMet seperate from 5HP/TPH)
 Attitude_out = 'Off';          % Output parsed attitude data
-SensorCompare = 'Yes';         % Show iMet, 5HP/TPH, and Pixhawk atmoshperic sensors on same plots
+SensorCompare = 'No';         % Show iMet, 5HP/TPH, and Pixhawk atmoshperic sensors on same plots
 pitchToggle = 'No';            % TIA-Specific
 throttleToggle = 'No';         % TIA-Specific
 Aircraft = 'N/A';              % TIA-Specific
@@ -37,6 +36,7 @@ animateHeadSize = 2;           % Icon size
 animateTailWidth = 1;          % Width of tail
 animateTailLength = 100;       % Length of tail
 
+%% Load Pixhawk DFL File
 if (strcmpi(pitchToggle,'Yes'))
     
     if(strcmpi(Aircraft,'TIA'))
@@ -179,6 +179,7 @@ end
 % Get filename without the extension, used by Save Function
 [~, baseNameNoExtDFL, ~] = fileparts(baseFileNameDFL);
 
+%% Manually Parse Data Set
 fig1=figure('Name','Raw data from DFL. Click on graph for upper and lower bound for parsing.');
 
 % Groundspeed plot
@@ -202,7 +203,7 @@ zero=int8(zeros(length(ATT(:,2)),1));
 plt3 = subplot(4,1,3);
 plot(ATT(:,2),ATT(:,4),'b',ATT(:,2),zero,'r:')
 title('Aircraft Pitch Angle vs Time')
-ylabel({'Aircraft Pitch';'Angle (Â°)'})
+ylabel({'Aircraft Pitch';'Angle (°)'})
 ylim([-10 40])
 
 % Altitude plot
@@ -248,7 +249,7 @@ while true
     subplot(4,1,3)
     plot(ATT(:,2),ATT(:,4),'b',ATT(:,2),zero,'r:',x_m,y_pitch,'kx')
     title('Aircraft Pitch Angle vs Time')
-    ylabel({'Aircraft Pitch';'Angle (Â°)'})
+    ylabel({'Aircraft Pitch';'Angle (°)'})
     ylim([-10 40])
     
     % Altitude plot
@@ -290,7 +291,7 @@ zero=int8(zeros(length(ATT(:,2)),1));
 plt3 = subplot(4,1,3);
 plot(ATT(:,2)/1000000,ATT(:,4),'b',ATT(:,2)/1000000,zero,'r:')
 title('Aircraft Pitch Angle vs Time')
-ylabel({'Aircraft Pitch';'Angle (Â°)'})
+ylabel({'Aircraft Pitch';'Angle (°)'})
 ylim([-10 40])
 
 % Altitude plot
@@ -452,8 +453,8 @@ IMU_AccY = IMU(TO_IMU:LND_IMU,7);
 IMU_AccZ = IMU(TO_IMU:LND_IMU,8);
 IMU_time_out = (IMU_time-min(IMU_time))/1000000;
 IMU = [IMU_LN, IMU_time, IMU_time_out, IMU_GyrX, IMU_GyrY, IMU_GyrZ, IMU_AccX, IMU_AccY, IMU_AccZ];
-IMU_label = {'Line No','Time since boot (us)','Time from parse (sec)','X Gyro rotation (Â°/sec)','Y Gyro rotation (Â°/sec)','Z Gyro rotation (Â°/sec)','X Acceleration (Â°/sec/sec)','Y Acceleration (Â°/sec/sec)','Z Acceleration (Â°/sec/sec)'};
-IMU_table = table(IMU_LN,IMU_time,IMU_time_out,IMU_GyrX, IMU_GyrY, IMU_GyrZ, IMU_AccX, IMU_AccY, IMU_AccZ,'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','X Gyro rotation (Â°/sec)','Y Gyro rotation (Â°/sec)','Z Gyro rotation (Â°/sec)','X Acceleration (Â°/sec/sec)','Y Acceleration (Â°/sec/sec)','Z Acceleration (Â°/sec/sec)'});
+IMU_label = {'Line No','Time since boot (us)','Time from parse (sec)','X Gyro rotation (°/sec)','Y Gyro rotation (°/sec)','Z Gyro rotation (°/sec)','X Acceleration (°/sec/sec)','Y Acceleration (°/sec/sec)','Z Acceleration (°/sec/sec)'};
+IMU_table = table(IMU_LN,IMU_time,IMU_time_out,IMU_GyrX, IMU_GyrY, IMU_GyrZ, IMU_AccX, IMU_AccY, IMU_AccZ,'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','X Gyro rotation (°/sec)','Y Gyro rotation (°/sec)','Z Gyro rotation (°/sec)','X Acceleration (°/sec/sec)','Y Acceleration (°/sec/sec)','Z Acceleration (°/sec/sec)'});
 
 % Parsed Pixhawk barometric data
 BARO_LN = BARO(TO_BARO:LND_BARO,1);
@@ -472,7 +473,7 @@ app.LocationofOutputFilesEditField.Value = fullParsedMatFileName;
 % Save file with parsed data as the original filename plus the added portion
 save(fullParsedMatFileName,'ATT_table','GPS_table','CTUN_table','NKF2_table','RCOU_table','STAT_table','BARO_table','IMU_table');
 
-
+%% iMet Data Analysis
 %%%%%%%%%%%%%%% iMet Data Parsing and Output %%%%%%%%%%%%%%%
 if (strcmpi(iMetValue,'Yes'))
     
@@ -579,7 +580,7 @@ if (strcmpi(iMetValue,'Yes'))
         iM_sat = table2array(iM_sat_temp(:,1));
     end
     
-    iMet_table = table(iM_Pix, iM_date, iM_time, iM_pres, iM_temp, iM_humid, iM_lat, iM_long, iM_alt, iM_sat,'VariableNames',{'Time from Arming (sec)','Date UTC','Time UTC','Barometric Pressure (hPa)','Air Temp (Â°C)','Relative Humidity (%)','GPS Lat','GPS Long','GPS Alt (m)','Sat Count'});
+    iMet_table = table(iM_Pix, iM_date, iM_time, iM_pres, iM_temp, iM_humid, iM_lat, iM_long, iM_alt, iM_sat,'VariableNames',{'Time from Arming (sec)','Date UTC','Time UTC','Barometric Pressure (hPa)','Air Temp (°C)','Relative Humidity (%)','GPS Lat','GPS Long','GPS Alt (m)','Sat Count'});
     save(fullParsedMatFileName,'iMet_table','-append');
 
     fig3=figure('Name','Parsed iMet data.');
@@ -588,7 +589,7 @@ if (strcmpi(iMetValue,'Yes'))
     plt = plot(iM_Pix(:), iM_temp(:),'y-',iM_Pix(:),iM_humid,'c-');
     title('Temp, Humidity, and Pressure vs Time')
     xlabel('Time (ms)');
-    ylabel('Temp (Â°C) and Humidity (%)');
+    ylabel('Temp (°C) and Humidity (%)');
     
     yyaxis right
     plt = plot(iM_Pix(:), iM_pres(:),'k-');
@@ -600,12 +601,13 @@ if (strcmpi(iMetValue,'Yes'))
         baseFileName = sprintf('%s_Parsed_iMet.csv', baseNameNoExtDFL);
         fullOutputMatFileName = fullfile(folderDFL, baseFileName);
         % Create a table with the data and variable names
-        iMet_table = table(iM_Pix, iM_date, iM_time, iM_pres, iM_temp, iM_humid, iM_lat, iM_long, iM_alt, iM_sat,'VariableNames',{'Time from Arming (sec)','Date UTC','Time UTC','Barometric Pressure (hPa)','Air Temp (Â°C)','Relative Humidity (%)','GPS Lat','GPS Long','GPS Alt (m)','Sat Count'});
+        iMet_table = table(iM_Pix, iM_date, iM_time, iM_pres, iM_temp, iM_humid, iM_lat, iM_long, iM_alt, iM_sat,'VariableNames',{'Time from Arming (sec)','Date UTC','Time UTC','Barometric Pressure (hPa)','Air Temp (°C)','Relative Humidity (%)','GPS Lat','GPS Long','GPS Alt (m)','Sat Count'});
         % Write data to text file
         writetable(iMet_table, fullOutputMatFileName);
     end
 end
 
+%% 5HP Data Analysis
 %%%%%%%%%%%%%%% 5 Hp Data Parsing and Output %%%%%%%%%%%%%%%
 if (strcmpi(MHPValue,'Yes') | strcmpi(TPHValue,'Yes'))
     
@@ -626,108 +628,83 @@ if (strcmpi(MHPValue,'Yes') | strcmpi(TPHValue,'Yes'))
     data = readmatrix(fullInputMatFileNameMHP);
     data(isnan(data)) = -1;
     
-    list = {'Probe 1', 'Probe 2'}; %user select which probe used, can be added to or changed to aircraft
-    [Probe, tf] = listdlg('ListString', list, 'SelectionMode','single');
-    
-    % preload alpha tables for each probe
-    Probe1_alpha_matrix= [-45,-40,-35,-30,-25,-20,-15,-10,-5,0,5,10,15,20,25,30,35,40,45;0.00890950449349955,0.00457311916858462,0.00176531256908854,-0.00384503506543701,-0.00629785482541360,0.00545246173247114,0.00180361752017460,-0.0134706403064275,-0.0209283381586332,0.00161285533724483,-0.00560008335729128,0.00767032479448327,0.00448131173266848,-0.00272215983941427,-0.00785090440434213,-0.00727564907826283,-0.0184637805270442,-0.0370242325174744,-0.0561445552881891;0.00890950449349955,0.00457311916858462,0.00176531256908854,-0.00384503506543701,-0.00629785482541360,0.00545246173247114,0.00180361752017460,-0.0134706403064275,-0.0209283381586332,0.00161285533724483,-0.00560008335729128,0.00767032479448327,0.00448131173266848,-0.00272215983941427,-0.00785090440434213,-0.00727564907826283,-0.0184637805270442,-0.0370242325174744,-0.0561445552881891;-0.0281164870232703,-0.0339345133123480,-0.0447818402609818,-0.0496940217587644,-0.0242475521047252,-0.0117264871876231,-0.0115696568615130,-0.0250751986590787,-0.00694590665125139,-0.00714957678533877,0.000725667229518117,-0.00680065470334982,-0.0180247033199839,-0.0285420721501812,-0.0254202783784962,-0.0259682621478350,-0.0464065013322731,-0.0625425130948133,-0.0404861779430812];
-    Probe1_beta_matrix= [-45,-40,-35,-30,-25,-20,-15,-10,-5,0,5,10,15,20,25,30,35,40,45;1.92795857684824,1.86640585880821,1.78333854720023,1.68830618894100,1.48190162295814,1.23007636776323,0.989942128905559,0.714933402777932,0.411757733789909,0.0412836130748961,-0.278289656746039,-0.641333612183352,-0.941173264310510,-1.16344358897035,-1.44969947874859,-1.66524561466847,-1.83235788322404,-1.92531837461670,-1.96114235762177;2.07175085435385,2.01588362356834,1.95731196306822,1.86776316096592,1.68046836139265,1.40618166564641,1.12837516766683,0.804287849511338,0.417473316952088,0.0260789109987813,-0.340765068849449,-0.735715607850259,-1.05241615185050,-1.33683222681374,-1.56705666019825,-1.79889141184890,-1.95376747845494,-2.05113247869176,-2.05826202435863;0.0707290944111967,0.0376513543446743,0.0226534563294856,0.0264146307134629,0.00609391866281019,-0.00506643052956358,-0.0130907730454455,-0.0287532222888066,-0.0569511978027162,-0.0472950752809539,-0.0605531685378152,-0.0575732762134579,-0.0502828667972820,-0.0407598948082382,-0.0568664870215310,-0.0751029239499308,-0.0954227496552539,-0.114525277676976,-0.133946707397796];
-    Probe2_alpha_matrix= [-45,-40,-35,-30,-25,-20,-15,-10,-5,0,5,10,15,20,25,30,35,40,45;-0.131242052837307,-0.136389485007933,-0.0809909059420208,-0.0943698966408916,-0.107179638507995,-0.0970363404597239,-0.0878088465662149,-0.0950166849941877,-0.0905382724207439,-0.0997775269439496,-0.0931654202828387,-0.0966954373330949,-0.0974433932122797,-0.0766313531667302,-0.0667290094541538,-0.0620515713369645,-0.0593983197145785,-0.0554435716423099,-0.0487238048745688;4.31105238806679,3.32803564700737,2.64007652102070,2.10583986073405,1.63822159402096,1.24217879451540,0.953015040309201,0.635678243745440,0.304460571816443,-0.0308525655399159,-0.373803002934950,-0.709460058948898,-1.01485174133808,-1.31758819523727,-1.67417295300184,-2.10384223226049,-2.68318423743897,-3.52271057583887,-4.94177953516455;3.63425718124077,2.86316966777994,2.22604557233219,1.72871522342427,1.34583379337387,1.05820130310302,0.759491235826697,0.422458537492854,0.0647766899671877,-0.277326552181110,-0.635443304694023,-0.964413464739489,-1.22766258871014,-1.55942598587771,-1.99792512263178,-2.39196571030306,-2.99692812897453,-3.97483297736893,-5.62531779097425];
-    Probe2_beta_matrix= [-45,-40,-35,-30,-25,-20,-15,-10,-5,0,5,10,15,20,25,30,35,40,45;-0.0190106225135046,0.0382333797314247,0.0512317425915240,0.0631388747930030,0.0522869055160835,0.0864766781442044,0.0976082365167135,0.110771223406251,0.128893249247102,0.111788218561612,0.108186757288006,0.111533072107942,0.102716700427734,0.0868793990847530,0.0738948568776470,0.0635370997301279,0.0435495422613849,-0.0284170445218643,-0.115067631331364;5.75688479464282,3.70436182220555,3.02430543922597,2.37319757925664,1.87677428552943,1.45295079193687,1.12626464106161,0.835761939179333,0.504257748113699,0.148612098606411,-0.154484026859164,-0.510025524555466,-0.830916330809970,-1.14102546194907,-1.48533749275955,-1.90925885298210,-2.42553149327421,-3.08747021230988,-4.13177277655773;5.83639065570778,3.54448304087544,2.84150187005140,2.31923900712636,1.78885345267533,1.42383382429329,1.13565584211568,0.853402415828206,0.503305472471274,0.149988335647144,-0.190193536255105,-0.554480064365479,-0.882051407409919,-1.18504801788553,-1.50829204883482,-1.90414734138032,-2.46731350470407,-3.17460754326493,-4.02477177523444];
-
     nrows = length(data(:,1));
     ncols = length(data(1,:));
     
     pressures = zeros(nrows, 4);
     
-    rho=1.197; %kg/m3 Lets move this down (calc it)
+    rho=1.197; %kg/m3
     
     CTUNTemp = CTUN;
     
     Pixcount=0;
     SScount=0;
-    
-    i=1:nrows; % vectorize instead of for loop (speed)
-    
-    time = data(i,1);
-    PitotB1 = data(i,2);
-    PitotB2 = data(i,3);
-    AlphaB1 = data(i,6);
-    AlphaB2 = data(i,7);
-    BetaB1 = data(i,10);
-    BetaB2 = data(i,11);
-    H1 = data(i,14);
-    T1 = data(i,16);
-    H2 = data(i,18);
-    T2 = data(i,20);
-    H3 = data(i,22);
-    T3 = data(i,24);
-    UnixT = data(i,26);
-    PixT = data(i,27);
-
-    PitotCount = ((PitotB1*256)+PitotB2);
-    AlphaCount =  ((AlphaB1*256)+AlphaB2);
-    BetaCount  =  ((BetaB1*256)+BetaB2);
-
-    Pitot_psi=((PitotCount-1638)*(1+1))/(14745-1638)-1;
-    Alpha_psi=((AlphaCount-1638)*(1+1))/(14745-1638)-1;
-    Beta_psi=((BetaCount-1638)*(1+1))/(14745-1638)-1;
-
-    Pitot_pa=Pitot_psi*6894.74;
-    Alpha_pa=Alpha_psi*6894.74;
-    Beta_pa=Beta_psi*6894.74;
-
-    pressures(i,1) = time;
-    pressures(i,2) = Pitot_pa;
-    pressures(i,3) = Alpha_pa;
-    pressures(i,4) = Beta_pa;
-
-    %Cp Calc
-    CP_a=Alpha_pa./Pitot_pa; 
-    CP_b=Beta_pa./Pitot_pa; 
-    
-    % Converts reduced data set pitot measurements to velocity (move down
-    % at some point)
-    Velocity(i,1)=time;
-    Velocity(i,2)=((2/rho)*(abs(Pitot_pa))) .^.5;
-    Velocity(i,3)=((2/rho)*(abs(Alpha_pa))) .^.5;
-    Velocity(i,4)=((2/rho)*(abs(Beta_pa))) .^.5;
-    
-    % calculate alpha and beta probe values
-    
-    Alpha=interp1(Probe1_alpha_matrix(2,:), Probe1_alpha_matrix(1,:), CP_a(i)); %just doing 1d interp for now until more speeds ran
-    Beta=interp1(Probe1_beta_matrix(2,:), Probe1_beta_matrix(1,:), CP_b(i)); 
-
-    MHPData(i,1)=time;            % Sensor board time
-    MHPData(i,2)=-1;              % Will become Pixhawk board time
-    MHPData(i,3)=Velocity(i,2);
-    MHPData(i,4)=Velocity(i,3);
-    MHPData(i,5)=Velocity(i,4);
-    MHPData(i,6)=Alpha(i);
-    MHPData(i,7)=Beta(i);
-       
     for i=1:nrows
-        UnixTime = UnixT(i);
-        Temp = T1(i);
-    if(UnixTime~=-1)
-        Pixcount=Pixcount+1;
-        PixData(Pixcount,1)=time(i);   % Sensor board time
-        PixData(Pixcount,2)=UnixTime;  % Unix time from Pix GPS
-        PixData(Pixcount,3)=PixT(i);   % Pixhawk board time
+        time = data(i,1);
+        PitotB1 = data(i,2);
+        PitotB2 = data(i,3);
+        AlphaB1 = data(i,6);
+        AlphaB2 = data(i,7);
+        BetaB1 = data(i,10);
+        BetaB2 = data(i,11);
+        H1 = data(i,14);
+        T1 = data(i,16);
+        H2 = data(i,18);
+        T2 = data(i,20);
+        H3 = data(i,22);
+        T3 = data(i,24);
+        UnixT = data(i,26);
+        PixT = data(i,27);
+        
+        PitotCount = ((PitotB1*256)+PitotB2);
+        AlphaCount =  ((AlphaB1*256)+AlphaB2);
+        BetaCount  =  ((BetaB1*256)+BetaB2);
+        
+        Pitot_psi=((PitotCount-1638)*(1+1))/(14745-1638)-1;
+        Alpha_psi=((AlphaCount-1638)*(1+1))/(14745-1638)-1;
+        Beta_psi=((BetaCount-1638)*(1+1))/(14745-1638)-1;
+        
+        Pitot_pa=Pitot_psi*6894.74;
+        Alpha_pa=Alpha_psi*6894.74;
+        Beta_pa=Beta_psi*6894.74;
+        
+        pressures(i,1) = time;
+        pressures(i,2) = Pitot_pa;
+        pressures(i,3) = Alpha_pa;
+        pressures(i,4) = Beta_pa;
+        
+        % Converts reduced data set pitot measurements to velocity
+        Velocity(i,1)=time;
+        Velocity(i,2)=((2/rho)*(abs(Pitot_pa))) .^.5;
+        Velocity(i,3)=((2/rho)*(abs(Alpha_pa))) .^.5;
+        Velocity(i,4)=((2/rho)*(abs(Beta_pa))) .^.5;
+        
+        MHPData(i,1)=time;            % Sensor board time
+        MHPData(i,2)=-1;              % Will become Pixhawk board time
+        MHPData(i,3)=Velocity(i,2);
+        MHPData(i,4)=Velocity(i,3);
+        MHPData(i,5)=Velocity(i,4);
+        
+        if(UnixT~=-1)
+            Pixcount=Pixcount+1;
+            PixData(Pixcount,1)=time;   % Sensor board time
+            PixData(Pixcount,2)=UnixT;  % Unix time from Pix GPS
+            PixData(Pixcount,3)=PixT;   % Pixhawk board time
+        end
+        
+        if(T1~=-1)
+            SScount=SScount+1;
+            THSense(SScount,1)=time;  % Sensor board time
+            THSense(SScount,2)=-1;    % Will become Pixhawk board time
+            THSense(SScount,3)=T1;
+            THSense(SScount,4)=T2;
+            THSense(SScount,5)=T3;
+            THSense(SScount,6)=H1;
+            THSense(SScount,7)=H2;
+            THSense(SScount,8)=H3;
+        end
+        
     end
-
-    if(Temp~=-1)
-        SScount=SScount+1;
-        THSense(SScount,1)=time(i);  % Sensor board time
-        THSense(SScount,2)=-1;    % Will become Pixhawk board time
-        THSense(SScount,3)=T1(i);
-        THSense(SScount,4)=T2(i);
-        THSense(SScount,5)=T3(i);
-        THSense(SScount,6)=H1(i);
-        THSense(SScount,7)=H2(i);
-        THSense(SScount,8)=H3(i);
-    end
-
     
     if (PixData(:,3) == -1)
         serialGPS = posixtime(GPS_final);
@@ -744,74 +721,88 @@ if (strcmpi(MHPValue,'Yes') | strcmpi(TPHValue,'Yes'))
         PixOff(i)=PixData(i,3)-PixData(i,1);
         GPS_off(i)=PixData(i,2)-PixData(i,1)/1000;
     end
-    end
+    
     PixAv=mean(PixOff);
     GPS_av = mean(GPS_off);
     
     leapseconds_unix = 28;
     
     % Offsets between board time and Pix time
-    THSense(:,2)=round((THSense(:,1)+PixAv),0);
-    THSense_Unix=round((THSense(:,1)/1000)+GPS_av,1);
     MHPData(:,2)=round((MHPData(:,1)+PixAv),0);
     MHPData_Unix=round((MHPData(:,1)/1000)+GPS_av,1);
-    
-    TH_DateTime=datetime(THSense_Unix,'ConvertFrom','posixTime','Format','MMM-dd-yyyy HH:mm:ss.S');
-    TH_Date=datestr(TH_DateTime,'mmm-dd-yyyy');
-    TH_Time=datestr(TH_DateTime,'HH:MM:SS.FFF');
     
     MHP_DateTime=datetime(MHPData_Unix,'ConvertFrom','posixTime','Format','MMM-dd-yyyy HH:mm:ss.S');
     MHP_Date=datestr(MHP_DateTime,'mmm-dd-yyyy');
     MHP_Time=datestr(MHP_DateTime,'HH:MM:SS.FFF');
     
+    if(exist('THSense'))
+        THSense(:,2)=round((THSense(:,1)+PixAv),0);
+        THSense_Unix=round((THSense(:,1)/1000)+GPS_av,1);
+        
+        TH_DateTime=datetime(THSense_Unix,'ConvertFrom','posixTime','Format','MMM-dd-yyyy HH:mm:ss.S');
+        TH_Date=datestr(TH_DateTime,'mmm-dd-yyyy');
+        TH_Time=datestr(TH_DateTime,'HH:MM:SS.FFF');
+    end
     
     % 5HP and TPH parsing
-    
-    if (min(TH_DateTime) < min(GPS_final))
-        TO_TPH = find(TH_DateTime(:)>=min(GPS_final),1,'first');
+    if (min(MHP_DateTime) < min(GPS_final))
+        if(exist('THSense'))
+            TO_TPH = find(TH_DateTime(:)>=min(GPS_final),1,'first');
+        end
         TO_MHP = find(MHP_DateTime(:)>=min(GPS_final),1,'first');
     else
-        TO_TPH = 1;
+        if(exist('THSense'))
+            TO_TPH = 1;
+        end
         TO_MHP = 1;
     end
     
-    if (max(TH_DateTime) > max(GPS_final))
-        LND_TPH = find(TH_DateTime(:)>=max(GPS_final),1,'first');
+    if (max(MHP_DateTime) > max(GPS_final))
+        if(exist('THSense'))
+            LND_TPH = find(TH_DateTime(:)>=max(GPS_final),1,'first');
+        end
         LND_MHP = find(MHP_DateTime(:)>=max(GPS_final),1,'first');
     else
-        LND_TPH = length(TH_DateTime);
+        if(exist('THSense'))
+            LND_TPH = length(TH_DateTime);
+        end
         LND_MHP = length(MHP_DateTime);
     end
     
-    TPH = THSense(TO_TPH:LND_TPH,:);
+    if(exist('THSense'))
+        TPH = THSense(TO_TPH:LND_TPH,:);
+        TH_Date = TH_Date(TO_TPH:LND_TPH,:);
+        TH_Time = TH_Time(TO_TPH:LND_TPH,:);
+        TPH_time_out = (TPH(:,1)-min(TPH(:,1)))/1000;
+    end
+    
     MHP = MHPData(TO_MHP:LND_MHP,:);
-    TH_Date = TH_Date(TO_TPH:LND_TPH,:);
-    TH_Time = TH_Time(TO_TPH:LND_TPH,:);
     MHP_Date = MHP_Date(TO_MHP:LND_MHP,:);
     MHP_Time = MHP_Time(TO_MHP:LND_MHP,:);
-    TPH_time_out = (TPH(:,1)-min(TPH(:,1)))/1000;
     MHP_time_out = (MHP(:,1)-min(MHP(:,1)))/1000;
+    
     Pix_time_out = (PixData(:,1)-min(PixData(:,1)))/1000;
     
     % Create tables with the data and variable names   
-    TPH_table = table(TPH(:,1),TPH(:,2),TPH_time_out,TH_Date, TH_Time, TPH(:,3),TPH(:,4),TPH(:,5),TPH(:,6),TPH(:,7),TPH(:,8) , 'VariableNames', {'Board Time from PowerUp (msec)','Pixhawk Time from PowerUp (msec)','Pix Time from parse','UTC Date','UTC Time','Temp 1 (Â°C)','Temp 2 (Â°C)','Temp 3 (Â°C)','Humidity 1 (%)','Humidity 2 (%)','Humidity 3 (%)'} );
-    MHP_table = table(MHP(:,1),MHP(:,2),MHP_time_out, MHP_Date, MHP_Time, MHP(:,3),MHP(:,4),MHP(:,5),MHP(:,6),MHP(:,7), 'VariableNames', {'Board Time from PowerUp (msec)','Pix Time from PowerUp (msec)','Pix time from parse','UTC Date','UTC Time','Pitot-Static (m/s)','V (m/s)','U (m/s)','Alpha(deg)','Beta(deg)'} );
-    PixData_table = table(PixData(:,1),PixData(:,2),Pix_time_out,PixData(:,3),'VariableNames',{'Sensor board time (ms)','GPS Unix Time (sec)','Pix board time (sec)','Pix board time (ms)'});
-    
-    save(fullParsedMatFileName,'TPH_table','-append');
+    MHP_table = table(MHP(:,1),MHP(:,2),MHP_time_out, MHP_Date, MHP_Time, MHP(:,3),MHP(:,4),MHP(:,5), 'VariableNames', {'Board Time from PowerUp (msec)','Pix Time from PowerUp (msec)','Pix time from parse','UTC Date','UTC Time','Pitot-Static (m/s)','Alpha (m/s)','Beta (m/s)'} );
     save(fullParsedMatFileName,'MHP_table','-append');
+    
+    PixData_table = table(PixData(:,1),PixData(:,2),Pix_time_out,PixData(:,3),'VariableNames',{'Sensor board time (ms)','GPS Unix Time (sec)','Pix board time (sec)','Pix board time (ms)'});
     save(fullParsedMatFileName,'PixData_table','-append');
+    
+    if(exist('THSense'))
+        TPH_table = table(TPH(:,1),TPH(:,2),TPH_time_out,TH_Date, TH_Time, TPH(:,3),TPH(:,4),TPH(:,5),TPH(:,6),TPH(:,7),TPH(:,8) , 'VariableNames', {'Board Time from PowerUp (msec)','Pixhawk Time from PowerUp (msec)','Pix Time from parse','UTC Date','UTC Time','Temp 1 (°C)','Temp 2 (°C)','Temp 3 (°C)','Humidity 1 (%)','Humidity 2 (%)','Humidity 3 (%)'} );
+        save(fullParsedMatFileName,'TPH_table','-append');
+    end
     
     if(strcmpi(MHPValue,'Yes') && strcmpi(TPHValue,'Yes'))
         
         fig4=figure('Name','Parsed 5HP and TPH Data');
         set(fig4,'defaultLegendAutoUpdate','off');
         subplot(2,1,1);
-        plt1 = plot(MHP(:,2)/1000,MHP(:,3),'r',MHP(:,2)/1000,MHP(:,4),'b', ...
-            MHP(:,2)/1000,MHP(:,5),'g',MHP(:,2)/1000,MHP(:,6),'m',MHP(:,2)/1000,MHP(:,7),'c', ...
-            CTUN(:,2)/1000000,CTUN(:,4),'k');
-        title('V, W, U, Alpha, Beta, and Pix Airspeeds with Time')
-        legend({'U','V', 'W', 'Alpha', 'Beta', 'Pix Arspd'},'Location','northwest')
+        plt1 = plot(MHP(:,2)/1000,MHP(:,3),'r',MHP(:,2)/1000,MHP(:,4),'b',MHP(:,2)/1000,MHP(:,5),'g',CTUN(:,2)/1000000,CTUN(:,4),'k');
+        title('Alpha, Beta, Pitot, and Pix Airspeeds with Time')
+        legend({'Pitot','Alpha', 'Beta','Pix Arspd'},'Location','northwest')
         ylabel('Airspeed (m/s)');
         xlim([(min(MHP(:,2)/1000)) (max(MHP(:,2)/1000))])
         
@@ -820,7 +811,7 @@ if (strcmpi(MHPValue,'Yes') | strcmpi(TPHValue,'Yes'))
         title('Temp and Humidity vs Time')
         legend({'Temp 1','Temp 2', 'Temp 3','Humid 1','Humid 2', 'Humid 3'},'Location','southeast')
         xlabel('Time (sec)');
-        ylabel('Temp (Â°C) and Humidity (%)');
+        ylabel('Temp (°C) and Humidity (%)');
         xlim([(min(TPH(:,2)/1000)) (max(TPH(:,2)/1000))])
         
         if(strcmpi(Sensor_out,'Yes'))
@@ -863,7 +854,7 @@ if (strcmpi(MHPValue,'Yes') | strcmpi(TPHValue,'Yes'))
         title('Temp and Humidity vs Time')
         legend({'Temp 1','Temp 2', 'Temp 3','Humid 1','Humid 2', 'Humid 3'},'Location','southeast')
         xlabel('Time (sec)');
-        ylabel('Temp (Â°C) and Humidity (%)');
+        ylabel('Temp (°C) and Humidity (%)');
         xlim([(min(TPH(:,2)/1000)) (max(TPH(:,2)/1000))])
         
         if(strcmpi(Sensor_out,'Yes'))
@@ -878,7 +869,7 @@ if (strcmpi(MHPValue,'Yes') | strcmpi(TPHValue,'Yes'))
     
 end
 
-
+%% Misc .CSV output files
 %%%%%%%%%%%%%%% CSV Output of GPS Data %%%%%%%%%%%%%%%%%%%%%
 if (strcmpi(GPS_out,'On'))
     % Get the name of the input.mat file and save as input_GPS.csv
@@ -906,6 +897,7 @@ if (strcmpi(StateSpace,'Yes'))
     writetable(IMU_table, fullOutputMatFileName);
 end
 
+%% Misc Plots
 % Get GPS points from parsed data file
 if (strcmpi(graphToggle,'On'))
     % Converted timestamps to time (in seconds) from TO to LND
@@ -918,7 +910,7 @@ if (strcmpi(graphToggle,'On'))
     t_high = max(GPS_time_out);
     
     
-    
+    % Overlay of all atmospheric data
     if (strcmpi(Overlay,'Yes'))
         
         fig5=figure('Name','Data Plots from Parsed Sensor data and Autopilot DFL');
@@ -970,7 +962,7 @@ if (strcmpi(graphToggle,'On'))
         plt3 = subplot(5,1,3);
         plot(t_cube,pitchAC,'b',t_cube,zero,'r:')
         title('Aircraft Pitch Angle vs Time')
-        ylabel({'Aircraft Pitch';'Angle (Â°)'})
+        ylabel({'Aircraft Pitch';'Angle (°)'})
         %xticks([150:20:370])
         ylim([-20 50])
 
@@ -995,7 +987,7 @@ if (strcmpi(graphToggle,'On'))
         plt2 = subplot(3,1,2);
         plot(iM_Pix(:),iM_temp(:),'k',iM_Pix(:),iM_humid,'k-',TPH_time_out,TPH(:,6),'r',TPH_time_out,TPH(:,3),'r-',TPH_time_out,TPH(:,7),'b',TPH_time_out,TPH(:,4),'b-',TPH_time_out,TPH(:,8),'g',TPH_time_out,TPH(:,5),'g-');
         title('iMet vs Sensor Package Temperature and Humidity');
-        ylabel({'Temp (Â°C) and Humidity (%)'});
+        ylabel({'Temp (°C) and Humidity (%)'});
         
         plt3 = subplot(3,1,3);
         plot(BARO(:,3),BARO(:,4),'k',iM_Pix(:),iM_pres(:),'r');
@@ -1030,7 +1022,7 @@ if (strcmpi(graphToggle,'On'))
         plt3 = subplot(4,1,3);
         plot(t_cube,pitchAC,'b',t_cube,zero,'r:')
         title('Aircraft Pitch Angle vs Time')
-        ylabel({'Aircraft Pitch';'Angle (Â°)'})
+        ylabel({'Aircraft Pitch';'Angle (°)'})
         ylim([-10 40])
         
         
@@ -1047,6 +1039,7 @@ if (strcmpi(graphToggle,'On'))
         
     end
     
+    % TIA-specific output variables (aircraft performance estimations)
     if (strcmpi(indvToggle,'Yes'))
         close(fig1)
         fig3=figure('Name','Interactive Plot - Right click or press Return/Enter when finished') ;
@@ -1074,7 +1067,7 @@ if (strcmpi(graphToggle,'On'))
         subplot(4,1,3);
         plot(t_cube,pitchAC,'b',t_cube,zero,'r:')
         title('Aircraft Pitch Angle vs Time')
-        ylabel({'Aircraft Pitch';'Angle (Â°)'})
+        ylabel({'Aircraft Pitch';'Angle (°)'})
         xlim([min(t_cube) max(t_cube)])
         ylim([-20 50])
         
@@ -1123,7 +1116,7 @@ if (strcmpi(graphToggle,'On'))
             subplot(4,1,3);
             plot(t_cube,pitchAC,'b',t_cube,zero,'r:',x_n,y_n5,'kx');
             title('Aircraft Pitch Angle vs Time');
-            ylabel({'Aircraft Pitch';'Angle (Â°)'});
+            ylabel({'Aircraft Pitch';'Angle (°)'});
             xlim([min(t_cube) max(t_cube)]);
             ylim([-20 50]);
             
@@ -1155,7 +1148,7 @@ if (strcmpi(graphToggle,'On'))
             fullOutputMatFileName = fullfile(folder, baseFileName);
             % Save file with parsed data as the original filename plus the added portion
             % Create a table with the data and variable names
-            T = table(round(y_n1.',1), round(y_n2.',1), round(y_n3.',1), round(y_n4.',1), round(y_n5.',1), round(y_n6.',1), round(y_n7.',1), round(thrT.',2), round(C_D.',6), round(C_L.',6), round(L_D.',4), 'VariableNames', {'Groundspeed (m/s)','Airspeed (m/s)','Windspeed (m/s)','Throttle (%)','Aircraft Pitch (Â°)','Altitude (m, AGL)','Pitch PWM','Thrust Output (units of Throttle Curve input file)','C_D','C_L','CD_CL'} )
+            T = table(round(y_n1.',1), round(y_n2.',1), round(y_n3.',1), round(y_n4.',1), round(y_n5.',1), round(y_n6.',1), round(y_n7.',1), round(thrT.',2), round(C_D.',6), round(C_L.',6), round(L_D.',4), 'VariableNames', {'Groundspeed (m/s)','Airspeed (m/s)','Windspeed (m/s)','Throttle (%)','Aircraft Pitch (°)','Altitude (m, AGL)','Pitch PWM','Thrust Output (units of Throttle Curve input file)','C_D','C_L','CD_CL'} )
             % Write data to text file
             writetable(T, fullOutputMatFileName)
             
@@ -1192,7 +1185,7 @@ if (strcmpi(graphToggle,'On'))
             fullOutputMatFileName = fullfile(folder, baseFileName);
             % Save file with parsed data as the original filename plus the added portion
             % Create a table with the data and variable names
-            T = table(round(y_n1.',1), round(y_n2.',1), round(y_n3.',1), round(y_n4.',1), round(y_n5.',1), round(y_n6.',1), round(y_n7.',1), round(thrT.',2), round(pitchT.',1), round(C_D.',6), round(C_L.',6), round(L_D.',4), 'VariableNames', {'Groundspeed (m/s)','Airspeed (m/s)','Windspeed (m/s)','Throttle (%)','Aircraft Pitch (Â°)','Altitude (m, AGL)','Pitch PWM','Thrust Output (units of Throttle Curve input file)','Servo Angular Deflection (Â°)','C_D','C_L','CD_CL'} )
+            T = table(round(y_n1.',1), round(y_n2.',1), round(y_n3.',1), round(y_n4.',1), round(y_n5.',1), round(y_n6.',1), round(y_n7.',1), round(thrT.',2), round(pitchT.',1), round(C_D.',6), round(C_L.',6), round(L_D.',4), 'VariableNames', {'Groundspeed (m/s)','Airspeed (m/s)','Windspeed (m/s)','Throttle (%)','Aircraft Pitch (°)','Altitude (m, AGL)','Pitch PWM','Thrust Output (units of Throttle Curve input file)','Servo Angular Deflection (°)','C_D','C_L','CD_CL'} )
             % Write data to text file
             writetable(T, fullOutputMatFileName)
             
@@ -1214,7 +1207,7 @@ if (strcmpi(graphToggle,'On'))
     end
 end
 
-% Animation of flight
+%% Flight Animation
 if(strcmpi(animateToggle, 'On'))
     id = ones(length(x), 1);
     obj1 = [x, y, z_AGL, t_plot', id];
