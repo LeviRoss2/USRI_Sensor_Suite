@@ -1,15 +1,16 @@
-% Pixhawk DFL Analyzer V4.3.
+% Pixhawk DFL Analyzer V4.4
 % Created by:    Levi Ross
 % Edited by:     Kyle Hickman, James Brenner
 % Unmanned Systems Research Institute
 % Creation Date: 11/17/2019
-% Last Modified: 11/5/2020
+% Last Modified: 11/6/2020
 % New features:
 %    * Replay _Parsed files
 %    * No longer need to set Ardupilot type, auto-selected from MSG1 log
 %    * Added Wind Rose to view estimated wind speed data form Pixhawk
 %    * Added PlotMergedData codeset, allowing for simultaneous or series data plots
 %    * Added custom .bin -> .mat converter, eliminating the need for Mission Planner
+%    * Complete CopterSonde support
 
 %% Clear All Data
 close all
