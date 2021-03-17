@@ -1,3 +1,4 @@
 These libraries are required for flashing the code to the Teensy using Arduino IDE with TeensyDuino.
 
 Simply download the .ZIP libraries and load them into Arduino following the standard procedure for .ZIP libraries.
+Steps for doing so can be found at: http://www.arduino.cc/en/Guide/Libraries
