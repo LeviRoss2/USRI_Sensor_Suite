@@ -1,5 +1,5 @@
 # Sensor Suite Repository
-This repo is for all code sets supporting the 5 Hole Pitot Probe (5HP) and integrated atmospheric sensing suite (Temp, Pressure, Humidity) developed by the Unmanned Systems Research Institute at Oklahoma State University. The Arduino folder contains all libraries and files relating to the microcontroller setup (currently Teenmsy 3.6, switching to Teensy 4.1). The Matlab folder contains the parsing 
+This repo is for all code sets supporting the 5 Hole Pitot Probe (5HP) and integrated atmospheric sensing suite (Temp, Pressure, Humidity) developed by the Unmanned Systems Research Institute at Oklahoma State University. The Arduino folder contains all libraries and files relating to the microcontroller setup (currently Teensy 3.6, switching to Teensy 4.1). The Matlab folder contains the parsing 
 Main code sets supporting 5 Hole Pitot Probe (5HP) data acquisition, analysis, parsing, and reporting.
 
 How to use (early draft)
