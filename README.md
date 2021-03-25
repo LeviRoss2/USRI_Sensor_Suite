@@ -11,7 +11,7 @@ This repo is for all code sets supporting the 5 Hole Pitot Probe (5HP) and integ
 4) Move file into conventient location. Whereever this file resides, so will the outputs from the Matlab parser.
 5) Move any supporting files to the same location (iMet, 5HP/TPH, etc.)
 
-How to use Matlab script (dev version)
+**How to use Matlab script (dev version)**
 1) Choose which flags you would like to enable/disable
 2) Click Run
    a) If an animation is chosen, the Command Window will prompt you to enter a plot title.
