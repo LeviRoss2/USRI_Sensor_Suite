@@ -1,7 +1,7 @@
 # Sensor Suite Repository
 This repo is for all code sets supporting the 5 Hole Pitot Probe (5HP) and integrated atmospheric sensing suite (Temp, Pressure, Humidity) developed by the Unmanned Systems Research Institute at Oklahoma State University. The Arduino folder contains all libraries and files relating to the microcontroller setup (currently Teensy 3.6, switching to Teensy 4.1). The Matlab folder contains the parsing main code sets supporting 5 Hole Pitot Probe (5HP) data acquisition, analysis, parsing, and reporting.
 
-**Prerequisites for running:**
+###Prerequisites for running:###
 1) Download Pixhawk DataFlash log using Mission Planner. Steps can be found here: https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html
 2) Convert Pixhawk DFL (.bin or .txt) to a matlab file using Mission Planner. 
    1) In Mission Planner, on "Data" page, select "DataFlash Logs" tab below the artificial horizon.
@@ -11,7 +11,7 @@ This repo is for all code sets supporting the 5 Hole Pitot Probe (5HP) and integ
 4) Move file into conventient location. Whereever this file resides, so will the outputs from the Matlab parser.
 5) Move any supporting files to the same location (iMet, 5HP/TPH, etc.)
 
-**How to use Matlab script (dev version)**
+###How to use Matlab script (dev version):###
 1) Choose which flags you would like to enable/disable
 2) Click Run
    1) If an animation is chosen, the Command Window will prompt you to enter a plot title.
