@@ -5,11 +5,11 @@ This repo is for all code sets supporting the 5 Hole Pitot Probe (5HP) and integ
 1) Download Pixhawk DataFlash log using Mission Planner. Steps can be found here: https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html
 2) Convert Pixhawk DFL (.bin or .txt) to a matlab file using Mission Planner. 
 
-  a) In Mission Planner, on "Data" page, select "DataFlash Logs" tab below the artificial horizon.
+        a) In Mission Planner, on "Data" page, select "DataFlash Logs" tab below the artificial horizon.
   
-  b) Select "Create Matlab File".
+         b) Select "Create Matlab File".
   
-  c) Choose the DFL from your computer you wish to run through Matlab script. *Note: this can take a few minutes.*
+        c) Choose the DFL from your computer you wish to run through Matlab script. *Note: this can take a few minutes.*
   
 3) Rename the file into something relevant. Common format includes Aircraft_Flight#_Month_Day_Year (ex: Hera_Flight1_08_04_2020)
 4) Move file into conventient location. Whereever this file resides, so will the outputs from the Matlab parser.
