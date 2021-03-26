@@ -1597,7 +1597,7 @@ if(strcmpi(Single_Multi,'Single'))
                 TPH_entry = THSense(TO_TPH:LND_TPH,:);
                 TH_Date = TH_Date(TO_TPH:LND_TPH,:);
                 TH_Time = TH_Time(TO_TPH:LND_TPH,:);
-                TPH_time_out = (TPH_entry(:,1)-min(TPH_entrya(:,1)))/1000;
+                TPH_time_out = (TPH_entry(:,1)-min(TPH_entry(:,1)))/1000;
             end
             
             MHP_entry = MHPData(TO_MHP:LND_MHP,:);
