@@ -3,4 +3,4 @@ Files in this folder are base codes that were incorporated into the master code 
 
 **5HP_v5_6_1_ArmCheck.ino** |  Original 5HP code with temperature and humidty reads
 
-**Anemometer_Base**          |  Receive data from Young Anemometer over RS232
+**Anemometer_Base**                   |  Receive data from Young Anemometer over RS232
