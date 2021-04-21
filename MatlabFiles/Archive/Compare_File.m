@@ -1,9 +1,9 @@
-% Pixhawk DFL Analyzer V4.8.2
+% Pixhawk DFL Analyzer V4.8.3
 % Created by:    Levi Ross | levi.ross@okstate.edu
 % Edited by:     Kyle Hickman | kthickm@okstate.edu
 % Unmanned Systems Research Institute
 % Creation Date: 11/17/2019
-% Last Modified: 03/25/2021 - Levi
+% Last Modified: 03/26/2021 - Kyle
 %
 % New features:
 %    * Replay _Parsed files
@@ -16,6 +16,14 @@
 %    * Added Animation of side-by-side T, P, and H graphs against GPS data
 %    * 3D-isometric viewing of Multi-Aircraft animation
 %    * Added altitude parsing to allow for multi-aircraft 3D plots
+%    * Brought in NKF1 parameters for GPS NED velocities and aircraft
+%    attitude states
+%    * 5HP data gets averaged down to Kalman Filter Rates 
+%    * 5HP data has aircraft states removed for 3D wind vector
+%    * Added plots for Corrected 5HP data
+%    * Added a option to average 5HP data for windspeed (useful for
+%    racetracks, wind squares etc.)
+%    
 %
 % General Updates:
 %    * Consolidated DFL_New and DFL_Old 5HP plots and output file saving
@@ -23,9 +31,17 @@
 % Bug Fixes:
 %    * Properly referencing Temp and Humidty values in Sensor Suite data
 %    * Explicitly defined all figures so there's no chance to overwrite
+%    * Fixed Figure 5 plot (changed from CTUN(:,2) to 3) 
+%
+% General Notes/Unresolved Bugs:
+%    * Quadcopter NKF1 imports untested 
+%    * 
+% Projects In Progress:
+%    * Adding an FFT function and Option for 5HP data analysis
+%    * Removing IMU states from 5hp data 
 %
 % Current Fig Count:
-%    * Single: 10
+%    * Single: 10 +1
 %    * Multi: 1
 
 %% Clear All Data
@@ -42,45 +58,67 @@ thrMaxPWM = 1900;              % Default, scales THR% plots
 Single_Multi = 'Single';
 
 % Single Controls
-tripleAnimateTPH = 'No';      % Side-by-side T, P, and H plots against GPS position
-graphToggle = 'No';          % Show plots of parsed data
-animateToggle = 'Yes';         % Flight animation based on GPS and Alt(AGL)
-recordAnimation = 'Yes';       % Record animation for future playback
+tripleAnimateTPH = 'Yes';      % Side-by-side T, P, and H plots against GPS position
+graphToggle = 'Yes';          % Show plots of parsed data
+animateToggle = 'No';         % Flight animation based on GPS and Alt(AGL)
+recordAnimation = 'No';       % Record animation for future playback
 hoverProfile = 'None';      % Profile (vertical) or Hover (stationary) averaging
 stateSpace = 'No';            % Pixhawk recorded SS variable output (new file)
 iMetValue = 'No';             % Load iMet data (XQ1 - small | XQ2 - large)
-mhpValue = 'No';             % Load 5HP/TPH data (use 5HP)
-tphValue = 'No';             % Load 5HP/TPH data (use TPH)
-overlay = 'No';              % Show iMet & 5HP/TPH alongside Pixhawk data plots
+mhpValue = 'Yes';             % Load 5HP/TPH data (use 5HP)
+mhpAvg = 'No';                % Lets user set averaging bounds for wind speed averages
+tphValue = 'Yes';             % Load 5HP/TPH data (use TPH)
+overlay = 'Yes';              % Show iMet & 5HP/TPH alongside Pixhawk data plots
 gpsOut = 'No';               % Output GPS data as individual file (lat, long, alt)
 sensorOut = 'No';            % Output parsed sensor data (iMet seperate from 5HP/TPH)
 attitudeOut = 'No';          % Output parsed attitude data
-sensorCompare = 'No';        % Show iMet, 5HP/TPH, and Pixhawk atmoshperic sensors on same plots
+sensorCompare = 'Yes';        % Show iMet, 5HP/TPH, and Pixhawk atmoshperic sensors on same plots
 dflNewOld = 'Unknown';
-arduPilotType = 'Fixed Wing';
+arduPilotType = 'Default';
 pitchToggle = 'No';            % TIA-Specific
 throttleToggle = 'No';         % TIA-Specific
 aircraft = 'N/A';              % TIA-Specific
 tvToggle = 'No';               % TIA-Specific
 indvToggle = 'No';             % TIA-Specific
-
+    
 % Only used for Single Animation
-animateSpeed = 2;             % Overall speed
-animateHeadSize = 3;           % Icon size
-animateTailWidth = 2;          % Width of tail
-animateTailLength = 10000;       % Length of tail
+animateSpeed = 5;             % Overall speed
+animateHeadSize = 2;           % Icon size
+animateTailWidth = 1;          % Width of tail
+animateTailLength = 100;       % Length of tail
 animateFPS = 30;
 animateHeadSize = animateHeadSize + 5;
 plotTitle = '';
 
+% Multi Controls
+   
 % Only used for Multi Animation
-animation = 'Yes';        % Default: Yes | Yes: turn on animation | No: turn Off
+animation = 'No';        % Default: Yes | Yes: turn on animation | No: turn Off
 simultaneous = 'No';     % Default: Yes | Yes: Files in same time frame | No: Files in concurrent time frames
-isometric = 'Yes';        % Default: Yes | Yes: view in 3D space | No: view in 2D with Satellite map overlay
+isometric = 'No';        % Default: Yes | Yes: view in 3D space | No: view in 2D with Satellite map overlay
 azimuthAngle = 45;        % Default: 45 | Rotation angle in x-y plane to view the 3D plot (positive values -> CCW rotation, negative CW)
 elevationAngle = 15;      % Default: 15 | Elevation angle above the X-Y plane (90 is top down X-Y plot, 0 is looking from the X-Y plane depending on azimuthAngle)
 iterationSkip = 5;       % Default: 5  | High numbers: increase animation speed, reduce smoothness. If increasing, decrease animFrameRate to have useful video time
 animFrameRate = 30;       % Default: 30 | High numbers: increase animation speed, increase smoothness. If increasing, decrease iteration_skip to have useful video time
+
+% Get animation plot titles and output file names for animations
+if(strcmpi(animateToggle,'Yes') | strcmpi(animation,'Yes'))
+    plotTitle = input('<strong>Enter Plot Title for animation function: </strong>','s');
+    % Get the name of the intput.mat file and save as input_parsed.mat
+    userFileName = input('<strong>Enter an output file name for the animation sequence to save as: </strong>','s');
+    if(strcmpi(userFileName,''))
+        userFileName = 'defaultAnimationOutput';
+    end
+    vidFileName = regexprep(userFileName, ' +', ' ');
+    videoOutputFileName = fullfile(folder, vidFileName);
+    
+    animVid = VideoWriter(videoOutputFileName,'MPEG-4');
+    animVid.FrameRate = animFrameRate;  %can adjust this, 5 - 10 works well for me
+    animVid.Quality = 100;
+end
+if(strcmpi(plotTitle,''))
+       plotTitle = 'Default'; 
+end
 
 %% Main Code
 display('Executing user-defined operations.');
@@ -507,7 +545,7 @@ if(strcmpi(Single_Multi,'Single'))
         
         % Execution of ArduPilotType
         if(strcmpi(arduPilotType,'Fixed Wing'))
-            load(fullInputMatFileNameDFL,'ATT','ATT_label','BARO','BARO_label','CTUN','CTUN_label','GPS','GPS_label','IMU','IMU_label','NKF2','NKF2_label','RCOU','RCOU_label');
+            load(fullInputMatFileNameDFL,'ATT','ATT_label','BARO','BARO_label','CTUN','CTUN_label','GPS','GPS_label','IMU','IMU_label','NKF1','NKF1_label','NKF2','NKF2_label','RCOU','RCOU_label');
             
             % Pre-parse for only relevant data series
             ATT = [ATT(:,1),ATT(:,2),ATT(:,4),ATT(:,6),ATT(:,8)];
@@ -516,6 +554,8 @@ if(strcmpi(Single_Multi,'Single'))
             BARO_label = [BARO_label(1:4)];
             CTUN = [CTUN(:,1),CTUN(:,2),CTUN(:,4),CTUN(:,6),CTUN(:,8),CTUN(:,10)];
             CTUN_label = [CTUN_label(1),CTUN_label(2),CTUN_label(4),CTUN_label(6),CTUN_label(8),CTUN_label(10)];
+            NKF1 = [NKF1(:,1),NKF1(:,2), NKF1(:,3), NKF1(:,4), NKF1(:,5), NKF1(:,6), NKF1(:,7), NKF1(:,8)]; %NKF1(:,9), NKF1(:,10), NKF1(:,11), NKF1(:,12), NKF1(:,13), NKF1(:,14), NKF1(:,15), NKF1(:,16)];
+            NKF1_label = [NKF1_label(1),NKF1_label(2), NKF1_label(3), NKF1_label(4), NKF1_label(5), NKF1_label(6), NKF1_label(7), NKF1_label(8)]; %, NKF1_label(9), NKF1_label(10), NKF1_label(11), NKF1_label(12), NKF1_label(13), NKF1_label(14), NKF1_label(15), NKF1_label(16)];            
             GPS = [GPS(:,1),GPS(:,2),GPS(:,4),GPS(:,5),GPS(:,8),GPS(:,9),GPS(:,10),GPS(:,11)];
             GPS_label = [GPS_label(1),GPS_label(2),GPS_label(4),GPS_label(5),GPS_label(8),GPS_label(9),GPS_label(10),GPS_label(11)];
             IMU = [IMU(:,1:8)];
@@ -527,7 +567,7 @@ if(strcmpi(Single_Multi,'Single'))
         end
         
         if(strcmpi(arduPilotType,'Quad-Plane'))
-            load(fullInputMatFileNameDFL,'ATT','ATT_label','BARO','BARO_label','CTUN','CTUN_label','IMU','IMU_label','GPS','GPS_label','XKF2','XKF2_label','RCOU','RCOU_label');
+            load(fullInputMatFileNameDFL,'ATT','ATT_label','BARO','BARO_label','CTUN','CTUN_label','IMU','IMU_label','GPS','GPS_label','XKF1','XKF1_label','XKF2','XKF2_label','RCOU','RCOU_label');
             
             % Pre-parse for only relevant data series
             ATT = [ATT(:,1),ATT(:,2),ATT(:,4),ATT(:,6),ATT(:,8)];
@@ -536,6 +576,8 @@ if(strcmpi(Single_Multi,'Single'))
             BARO_label = [BARO_label(1:4)];
             CTUN = [CTUN(:,1),CTUN(:,2),CTUN(:,4),CTUN(:,6),CTUN(:,8),CTUN(:,10)];
             CTUN_label = [CTUN_label(1),CTUN_label(2),CTUN_label(4),CTUN_label(6),CTUN_label(8),CTUN_label(10)];
+            NKF1 = [XKF1(:,1),XKF1(:,2), XKF1(:,3), XKF1(:,4), XKF1(:,5), XKF1(:,6), XKF1(:,7), XKF1(:,8)]; %, XKF1(:,9), XKF1(:,10), XKF1(:,11), XKF1(:,12), XKF1(:,13), XKF1(:,14), XKF1(:,15), XKF1(:,16)];
+            NKF1_label = [XKF1_label(1),XKF1_label(2), XKF1_label(3), XKF1_label(4), XKF1_label(5), XKF1_label(6), XKF1_label(7), XKF1_label(8)]; %, XKF1_label(9), XKF1_label(10), XKF1_label(11), XKF1_label(12), XKF1_label(13), XKF1_label(14), XKF1_label(15), XKF1_label(16)];  
             GPS=[GPS(:,1),GPS(:,2),GPS(:,4),GPS(:,5),GPS(:,8),GPS(:,9),GPS(:,10),GPS(:,11)];
             GPS_label = [GPS_label(1),GPS_label(2),GPS_label(4),GPS_label(5),GPS_label(8),GPS_label(9),GPS_label(10),GPS_label(11)];
             IMU = [IMU(:,1:8)];
@@ -546,9 +588,9 @@ if(strcmpi(Single_Multi,'Single'))
             RCOU_label = [RCOU_label(1:6)];
         end
         
-        % Not configured
+        % Not configured OF NOTE: Have not implemented NKF1 in DFL load
         if(strcmpi(arduPilotType,'ArduCopter'))
-            load(fullInputMatFileNameDFL,'ATT','ATT_label','BARO','BARO_label','IMU','IMU_label','GPS','GPS_label','NKF2','NKF2_label','RCOU','RCOU_label');
+            load(fullInputMatFileNameDFL,'ATT','ATT_label','BARO','BARO_label','IMU','IMU_label','GPS','GPS_label','NKF1','NKF1_label','NKF2','NKF2_label','RCOU','RCOU_label');
             
             % Pre-parse for only relevant data series
             ATT = [ATT(:,1),ATT(:,2),ATT(:,4),ATT(:,6),ATT(:,8)];
@@ -559,6 +601,10 @@ if(strcmpi(Single_Multi,'Single'))
             GPS_label = [GPS_label(1),GPS_label(2),GPS_label(4),GPS_label(5),GPS_label(8),GPS_label(9),GPS_label(10),GPS_label(11)];
             IMU = [IMU(:,1:8)];
             IMU_label = [IMU_label(1:8)];
+            %new
+            NKF1 = [NKF1(:,1),NKF1(:,2), NKF1(:,3), NKF1(:,4), NKF1(:,5), NKF1(:,6), NKF1(:,7), NKF1(:,8)];%, NKF1(:,9), NKF1(:,10), NKF1(:,11), NKF1(:,12), NKF1(:,13), NKF1(:,14), NKF1(:,15), NKF1(:,16)];
+            NKF1_label = [NKF1_label(1),NKF1_label(2), NKF1_label(3), NKF1_label(4), NKF1_label(5), NKF1_label(6), NKF1_label(7), NKF1_label(8)];%, NKF1_label(9), NKF1_label(10), NKF1_label(11), NKF1_label(12), NKF1_label(13), NKF1_label(14), NKF1_label(15), NKF1_label(16)];
+            %new
             NKF2 = [NKF2(:,1),NKF2(:,2),NKF2(:,6),NKF2(:,7)];
             NKF2_label = [NKF2_label(1),NKF2_label(2),NKF2_label(6),NKF2_label(7)];
             RCOU = [RCOU(:,1:6)];
@@ -819,11 +865,13 @@ if(strcmpi(Single_Multi,'Single'))
         TO = IMU(find(IMU(:,2)>=x_m(1), 1, 'first'),1);
         LND = IMU(find(IMU(:,2)>=x_m(2), 1, 'first'),1);
         
-        % Potision in each major dataset (GPS, CTUN, NKF2, RCOU) for Takeoff (TO)
+        % Potision in each major dataset (GPS, CTUN, NKF1, NKF2, RCOU) for Takeoff (TO)
         % and Landing (LND)
         if(strcmpi(arduPilotType,'ArduCopter'))
-            TO_NKF = find(NKF2(:,1)>TO,1,'first')-1;
-            LND_NKF = find(NKF2(:,1)>LND,1,'first')-1;
+            TO_NKF1 = find(NKF1(:,1)>TO,1,'first')-1;
+            LND_NKF1 = find(NKF1(:,1)>LND,1,'first')-1;
+            TO_NKF2 = find(NKF2(:,1)>TO,1,'first')-1;
+            LND_NKF2 = find(NKF2(:,1)>LND,1,'first')-1;
         elseif(strcmpi(arduPilotType,'CopterSonde'))
             TO_WIND = find(WIND(:,1)>TO,1,'first')-1;
             LND_WIND = find(WIND(:,1)>LND,1,'first')-1;
@@ -832,8 +880,10 @@ if(strcmpi(Single_Multi,'Single'))
         else
             TO_CTUN = find(CTUN(:,1)>TO,1,'first')-1;
             LND_CTUN = find(CTUN(:,1)>LND,1,'first')-1;
-            TO_NKF = find(NKF2(:,1)>TO,1,'first')-1;
-            LND_NKF = find(NKF2(:,1)>LND,1,'first')-1;
+            TO_NKF1 = find(NKF1(:,1)>TO,1,'first')-1;
+            LND_NKF1 = find(NKF1(:,1)>LND,1,'first')-1;
+            TO_NKF2 = find(NKF2(:,1)>TO,1,'first')-1;
+            LND_NKF2 = find(NKF2(:,1)>LND,1,'first')-1;
         end
         TO_GPS = find(GPS(:,1)>TO,1,'first')-1;
         LND_GPS = find(GPS(:,1)>LND,1,'first')-1;
@@ -875,9 +925,9 @@ if(strcmpi(Single_Multi,'Single'))
             % Airspeed
             v_a=CTUN(TO_CTUN:LND_CTUN,6);
             % North winds
-            VWN=NKF2(TO_NKF:LND_NKF,3);
+            VWN=NKF2(TO_NKF2:LND_NKF2,3);
             % East winds
-            VWE=NKF2(TO_NKF:LND_NKF,4);
+            VWE=NKF2(TO_NKF2:LND_NKF2,4);
             % Wind vector
             wind=(VWN.^2+VWE.^2).^0.5;
         end
@@ -893,6 +943,21 @@ if(strcmpi(Single_Multi,'Single'))
         yawAC = ATT(TO_ATT:LND_ATT,5);
         % Throttle output from Pixhawk
         thr=(RCOU(TO_RCOU:LND_RCOU,5)-thrMinPWM)/(thrMaxPWM-thrMinPWM)*100;
+        
+        
+        %%%% EKF Aircraft Data %%%%
+        % EKF Roll
+        rollEKF=NKF1(TO_NKF1:LND_NKF1,3);
+        % EKF Pitch
+        pitchEKF=NKF1(TO_NKF1:LND_NKF1,4);
+        % EKF Yaw
+        yawEKF=NKF1(TO_NKF1:LND_NKF1,5);
+        % North Aircraft Velocity
+        vnEKF=NKF1(TO_NKF1:LND_NKF1,6);
+        % East Aircraft Velocity
+        veEKF=NKF1(TO_NKF1:LND_NKF1,7);
+        % Down Aircraft Velocity 
+        vdEKF=NKF1(TO_NKF1:LND_NKF1,8);
     end
     %% Parse All Data and Save To Respective Tables
     if(strcmpi(DFL_NewOld,'New'))
@@ -941,12 +1006,19 @@ if(strcmpi(Single_Multi,'Single'))
         
         if(strcmpi(arduPilotType,'CopterSonde'))
             % Parsed WIND (NKF2) data output
-            NKF_LN = WIND(TO_WIND:LND_WIND,1);
-            NKF_time = WIND(TO_WIND:LND_WIND,2);
-            NKF_time_out= (NKF_time-min(NKF_time))/1000000;
-            NKF2 = [NKF_LN, NKF_time, NKF_time_out, VWN, VWE];
+            NKF2_LN = WIND(TO_WIND:LND_WIND,1);
+            NKF2_time = WIND(TO_WIND:LND_WIND,2);
+            NKF2_time_out= (NKF2_time-min(NKF2_time))/1000000;
+            NKF2 = [NKF2_LN, NKF2_time, NKF2_time_out, VWN, VWE];
             NKF2_label = {'Line No','Time since boot (us)','Time from Arming (sec)','North Wind Vector (m/s)','East Wind Vector (m/s)'};
-            NKF2_table = table(NKF_LN, NKF_time, NKF_time_out, VWN, VWE, wind,'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','North Wind Vector (m/s)','East Wind Vector (m/s)','Wind Speed (m/s)'});
+            NKF2_table = table(NKF2_LN, NKF2_time, NKF2_time_out, VWN, VWE, wind,'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','North Wind Vector (m/s)','East Wind Vector (m/s)','Wind Speed (m/s)'});
+            
+            NKF1_LN = NKF1(TO_NKF1:LND_NKF1,1);
+            NKF1_time = NKF1(TO_NKF1:LND_NKF1,2);
+            NKF1_time_out= (NKF1_time-min(NKF1_time))/1000000;
+            NKF1 = [NKF1_LN, NKF1_time, NKF1_time_out, Roll, Pitch, Yaw, VN, VE, VD];
+            NKF1_label = {'Line No','Time since boot (us)','Time from Arming (sec)','Roll','Pitch','Yaw','VN','VE','VD'};
+            NKF1_table = table(NKF1_LN, NKF1_time, NKF1_time_out, Roll, Pitch, Yaw, VN, VE, VD, 'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','North Wind Vector (m/s)','East Wind Vector (m/s)','Wind Speed (m/s)'});
             
             IMET_LN = IMET(TO_IMET:LND_IMET,1);
             IMET_time = IMET(TO_IMET:LND_IMET,2);
@@ -955,12 +1027,20 @@ if(strcmpi(Single_Multi,'Single'))
             
         else
             % Parsed NKF2 data output
-            NKF_LN = NKF2(TO_NKF:LND_NKF,1);
-            NKF_time = NKF2(TO_NKF:LND_NKF,2);
-            NKF_time_out= (NKF_time-min(NKF_time))/1000000;
-            NKF2 = [NKF_LN, NKF_time, NKF_time_out, VWN, VWE];
+            NKF2_LN = NKF2(TO_NKF2:LND_NKF2,1);
+            NKF2_time = NKF2(TO_NKF2:LND_NKF2,2);
+            NKF2_time_out= (NKF2_time-min(NKF2_time))/1000000;
+            NKF2 = [NKF2_LN, NKF2_time, NKF2_time_out, VWN, VWE];
             NKF2_label = {'Line No','Time since boot (us)','Time from Arming (sec)','North Wind Vector (m/s)','East Wind Vector (m/s)'};
-            NKF2_table = table(NKF_LN, NKF_time, NKF_time_out, VWN, VWE, wind,'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','North Wind Vector (m/s)','East Wind Vector (m/s)','Wind Speed (m/s)'});
+            NKF2_table = table(NKF2_LN, NKF2_time, NKF2_time_out, VWN, VWE, wind,'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','North Wind Vector (m/s)','East Wind Vector (m/s)','Wind Speed (m/s)'});
+        
+            NKF1_LN = NKF1(TO_NKF1:LND_NKF1,1);
+            NKF1_time = NKF1(TO_NKF1:LND_NKF1,2);
+            NKF1_time_out= (NKF1_time-min(NKF1_time))/1000000;
+            NKF1 = [NKF1_LN, NKF1_time, NKF1_time_out, rollEKF, pitchEKF, yawEKF, vnEKF, veEKF, vdEKF];
+            NKF1_label = {'Line No','Time since boot (us)','Time from Arming (sec)','Roll','Pitch','Yaw','VN','VE','VD'};
+            NKF1_table = table(NKF1_LN, NKF1_time, NKF1_time_out, rollEKF, pitchEKF, yawEKF, vnEKF, veEKF, vdEKF, 'VariableNames',{'Line Number','Time from boot (us)','Time from parse (sec)','Roll','Pitch','Yaw','VN', 'VE', 'VD'});       
+        
         end
         
         % Parsed RCOU data output
@@ -1481,24 +1561,25 @@ if(strcmpi(Single_Multi,'Single'))
             total = sqrt(abs(u).^2 + abs(v).^2 + abs(2).^2);
             
             for i=1:nrows
-                MHPData(i,1)=time(i);            % Sensor board time
-                MHPData(i,2)=-1;              % Will become Pixhawk board time
-                MHPData(i,3)=u(i);
-                MHPData(i,4)=v(i);
-                MHPData(i,5)=w(i);
-                MHPData(i,6)=Alpha(i);
-                MHPData(i,7)=Beta(i);
-                MHPData(i,8)=0;
-                MHPData(i,9)=0;
-                %            MHPData(i,8)=Alpha_MA(i);
-                %            MHPData(i,9)=Beta_MA(i);
-                MHPData(i,10)=total(i);
-                MHPData(i,11)=0;
-                MHPData(i,12)=0;
-                MHPData(i,13)=0;
-                MHPData(i,14)=0;
+            MHPData(i,1)=time(i);            % Sensor board time
+            MHPData(i,2)=-1;              % Will become Pixhawk board time
+            MHPData(i,3)=u(i);              % probe u velocity 
+            MHPData(i,4)=v(i);              % probe v velocity
+            MHPData(i,5)=w(i);              % probe w velocity
+            MHPData(i,6)=Alpha(i);          % alpha angle of the probe
+            MHPData(i,7)=Beta(i);           % beta angle of the probe
+            MHPData(i,8)=0;
+            MHPData(i,9)=0;
+%            MHPData(i,8)=Alpha_MA(i);
+%            MHPData(i,9)=Beta_MA(i);
+            MHPData(i,10)=total(i);         % calculated total velocity of the probe (body frame)
+            MHPData(i,11)=0;
+            MHPData(i,12)=0;
+            MHPData(i,13)=0;
+            MHPData(i,14)=0;
             end
             
+            % calculation of difference between teensy time and pixtime
             if (PixData(:,3) == -1)
                 serialGPS = posixtime(GPS_final);
                 tempPixTime = GPS_table(:,2)/100000;
@@ -1523,12 +1604,6 @@ if(strcmpi(Single_Multi,'Single'))
             % Offsets between board time and Pix time
             MHPData(:,2)=round((MHPData(:,1)+PixAv),0);
             MHPData_Unix=round((MHPData(:,1)/1000)+GPS_av,1);
-            
-            
-            
-            %% ADD CODE HERE
-            
-            
             
             %% REST OF CODE
             
@@ -1605,8 +1680,84 @@ if(strcmpi(Single_Multi,'Single'))
         if(exist('MHP_table','var'))
             MHP = [table2array(MHP_table(:,1:3)) table2array(MHP_table(:,6:end))];
             CTUN = table2array(CTUN_table);
+            NKF1 = table2array(NKF1_table);
         end
         
+                    %% ADD CODE HERE
+            
+                        %% Removal of aircraft velocities from 5hp data (no removal of rotational velocities)
+            % Variables to locate/Initialize
+            
+            %R_BI rotation matrix body to Earth inertial frame
+            for i=1:length(NKF1(:,2))
+                R_BI(:,:,i) = [cosd(NKF1(i,4))*cosd(NKF1(i,6)), cosd(NKF1(i,4))*sind(NKF1(i,6)), -sind(NKF1(i,4));
+                    sind(NKF1(i,5))*sind(NKF1(i,4))*cosd(NKF1(i,6))-cosd(NKF1(i,5))*sind(NKF1(i,6)), sind(NKF1(i,5))*sind(NKF1(i,4))*sind(NKF1(i,6))+cosd(NKF1(i,5))*cosd(NKF1(i,6)), sind(NKF1(i,5))*cosd(NKF1(i,4));
+                    cosd(NKF1(i,5))*sind(NKF1(i,4))*cosd(NKF1(i,6))+sind(NKF1(i,5))*sind(NKF1(i,6)), cosd(NKF1(i,5))*sind(NKF1(i,4))*sind(NKF1(i,6))-sind(NKF1(i,5))*cosd(NKF1(i,6)), cosd(NKF1(i,5))*cosd(NKF1(i,4))];
+            end
+            
+            % U_ac aircraft velocity [U_ac, V_ac, W_ac]
+            % GPS/Filter data
+            U_ac = [NKF1(:,7), NKF1(:,8), NKF1(:,9)]; % this is VN, VE, VD (will need to be rotated into body frame)
+ 
+            for i=1:length(NKF1(:,2))
+                U_acB(i,:) = U_ac(i,:)*R_BI(:,:,i)';
+            end
+            
+            U_acBT = (U_acB(:,1).^2+U_acB(:,2).^2+U_acB(:,3).^2).^.5;
+            
+            % U_s 5HP velocity vector [U_s,V_s,W_s]
+            % This will come from teensy data
+            U_s = [MHP(:,4), MHP(:,5), MHP(:,6)];
+            
+            % data fusion for 5hp data and pixhawk velocities
+            % Pixhawk Kalman Filter Runs at ~14hz (not formated to run yet)
+            % ATT data runs at ~25hz
+            % 5HP runs at ~200hz 
+            % For now will use ATT data, avg the 5HP data around the ATT data
+            % Believe ATT data is unfiltered compass data (need to verify) if so may
+            % look into swithing to EKF when there is significant compass
+            % variance. 
+                        
+            % The code hangs here sometimes unresolved(I think this is
+            % fixed)
+             for i = 1:length(NKF1(:,3))
+                NKF1_5HP(i,1) = find(NKF1(i,3)>=MHP(:,3),1,'last');             
+             end
+                
+             ProbeSpeed = MHP(:,11);
+             
+             %Windowing of data 
+             for i = 1:length(NKF1(:,3))-1
+                AvgmhpWind(i,1) = mean(ProbeSpeed(NKF1_5HP(i,1):NKF1_5HP(i+1,1)));
+             end
+             
+             AvgmhpWind(length(NKF1(:,3)),1) = ProbeSpeed(length(NKF1(:,3)),1);
+             
+             mhpWind = abs(AvgmhpWind - U_acBT(:,1));
+            
+            %% stuff for removal of rotational rates
+            
+            % H_ac aircraft heading from ekf
+            H_ac = [ATT(:,4),ATT(:,5),ATT(:,6)];
+            
+            % HE_ac aircraft heading rate [p, q, r]
+            % accel/gyro/mag
+            
+            Hr_ac = [IMU(:,3), IMU(:,4), IMU(:,5)];
+            
+            %r distance of probe tip from cg of aircraft
+            
+            r_Nano = 14; %Distance form 1/4 cord to tip on Nano Talon
+            
+            %[Us]B=[Uac]B * [p, q, ,r].*r
+            
+            %% Averaging of 5HP data (retrieval of avg wind from orbits)
+            
+            
+  
+            
+            %% 5HP & TPH plotting 
+            
         if(strcmpi(mhpValue,'Yes') && strcmpi(tphValue,'Yes') && exist('THSense','var'))
             
             fig4=figure(4);
@@ -1631,7 +1782,7 @@ if(strcmpi(Single_Multi,'Single'))
             fig5.Name = 'MHP vs Pix Airspeeds';
             set(fig5,'defaultLegendAutoUpdate','off');
             subplot(2,1,1);
-            plt1 = plot(MHP(:,3),MHP(:,4),'r',CTUN(:,2)/1000000,CTUN(:,4),'k');
+            plt1 = plot(MHP(:,3),MHP(:,4),'r',CTUN(:,3),CTUN(:,4),'k');
             title('MHP Pitot and Pix Airspeeds with Time')
             legend({'MHP Pitot', 'Pix Arspd'},'Location','northwest')
             ylabel('Airspeed (m/s)');
@@ -1643,6 +1794,14 @@ if(strcmpi(Single_Multi,'Single'))
             legend({'MHP-Pitot','MHP-Alpha','MHP-Beta', 'Pix Arspd'},'Location','northwest')
             ylabel('Airspeed (m/s)');
             xlim([(min(MHP(:,3))) (max(MHP(:,3)))])
+            
+            fig11 = figure(11);
+            fig11.Name = 'MHP vs. Pix Windspeeds';
+            plt = plot(NKF1(:,2),mhpWind,NKF1(:,2),wind);
+            legend('MHP Wind Estimation', 'PixWind Estimation')
+            title('MHP vs. Pix Windspeeds')
+            xlabel('time (ms)')
+            ylabel('wind speed (m/s)')
             
             if(strcmpi(sensorOut,'Yes'))
                 if(strcmpi(DFL_NewOld,'New'))
@@ -1699,7 +1858,16 @@ if(strcmpi(Single_Multi,'Single'))
             title('MHP Pitot, Alpha, Beta, and Pix Airspeeds with Time')
             legend({'MHP-Pitot','MHP-Alpha','MHP-Beta', 'Pix Arspd'},'Location','northwest')
             ylabel('Airspeed (m/s)');
-            xlim([(min(MHP(:,3))) (max(MHP(:,3)))])
+            xlim([(min(MHP(:,3))) (max(MHP(:,3)))])           
+            
+            fig11 = figure(11);
+            fig11.Name = 'MHP vs. Pix Windspeeds';
+            plt = plot(NKF1(:,2),mhpWind,NKF1(:,2),wind);
+            legend('MHP Wind Estimation', 'PixWind Estimation')
+            title('MHP vs. Pix Windspeeds')
+            xlabel('time (ms)')
+            ylabel('wind speed (m/s)')
+            
             
             if(strcmpi(sensorOut,'Yes'))
                 if(strcmpi(DFL_NewOld,'New'))
@@ -2177,28 +2345,12 @@ if(strcmpi(Single_Multi,'Single'))
         end
     end
     %% Animation of Flight
-    
     if(strcmpi(animateToggle, 'Yes'))
-        % Get animation plot titles and output file names for animations
-        if(strcmpi(animateToggle,'Yes') | strcmpi(animation,'Yes'))
-            plotTitle = input('<strong>Enter Plot Title for animation function: </strong>','s');
-            % Get the name of the intput.mat file and save as input_parsed.mat
-            userFileName = input('<strong>Enter an output file name for the animation sequence to save as: </strong>','s');
-            if(strcmpi(userFileName,''))
-                userFileName = 'defaultAnimationOutput';
-            end
-            vidFileName = regexprep(userFileName, ' +', ' ');
-            videoOutputFileName = fullfile(startingFolderDFL, vidFileName);
-            
-            animVid = VideoWriter(videoOutputFileName,'MPEG-4');
-            animVid.FrameRate = animFrameRate;  %can adjust this, 5 - 10 works well for me
-            animVid.Quality = 100;
-        end
         if(strcmpi(tripleAnimateTPH,'Yes'))
             %% Animation Setup
-            animVid = VideoWriter('Kessler 8-4-2020, TriplePlot','MPEG-4'); %open video file
-            animVid.FrameRate = 20;  %can adjust this, 5 - 10 works well for me
-            animVid.Quality = 100;
+            myVideo = VideoWriter('Kessler 8-4-2020, TriplePlot','MPEG-4'); %open video file
+            myVideo.FrameRate = 20;  %can adjust this, 5 - 10 works well for me
+            myVideo.Quality = 100;
             
             interval = 20;
             
@@ -2352,7 +2504,7 @@ if(strcmpi(Single_Multi,'Single'))
             
             zl.Color = 'k';
             %% Animation Function
-            open(animVid);
+            open(myVideo);
             for jj=1:interval:length(xAnim);
                 try
                     p1 = patch(ax1,xAnim(1:jj),yAnim(1:jj),zAnim(1:jj),cAnim1(1:jj),'EdgeColor','interp','FaceColor','none','LineWidth',2); view(-45,45)
@@ -2373,26 +2525,22 @@ if(strcmpi(Single_Multi,'Single'))
                     
                     pause(1/50); %Pause and grab frame
                     frame = getframe(gcf); %get frame
-                    writeVideo(animVid, frame);
+                    writeVideo(myVideo, frame);
                     cla(ax1);
                     cla(ax2);
                     cla(ax3);
                 catch
                     pause(1/50); %Pause and grab frame
                     frame = getframe(gcf); %get frame
-                    writeVideo(animVid, frame);
-                    close(animVid);
+                    writeVideo(myVideo, frame);
+                    close(myVideo);
                     break
                     
                 end
             end
-            close(animVid);
-        elseif(strcmpi(isometric,'Yes'))
+            close(myVideo);
+        else
             %% Animation Setup
-            
-            if(strcmpi(plotTitle,''))
-                plotTitle = 'Default';
-            end
             WindSpacing = NKF2_table(1:5:end,:);
             
             if(height(GPS_table)<height(WindSpacing))
@@ -2501,7 +2649,10 @@ if(strcmpi(Single_Multi,'Single'))
             display('Beginning animation sequence');
             %% Animation Function
             if(strcmpi(recordAnimation,'Yes'));
-                open(animVid);
+                myVideo = VideoWriter('WindBarbTest_2D','MPEG-4'); %open video file
+                myVideo.FrameRate = animateFPS;  %can adjust this, 5 - 10 works well for me
+                myVideo.Quality = 100;
+                open(myVideo);
                 
                 for i=1:animateSpeed:length(EW);
                     c1=compass(ax1,[0 EW(i)],[limHigh NW(i)]);
@@ -2511,42 +2662,6 @@ if(strcmpi(Single_Multi,'Single'))
                     set(ax1,'ydir','reverse');
                     set(labels(13),'visible','off');
                     set(labels(14),'visible','off');
-                    
-                    set(c1(2),'LineWidth',1.5,'color','red');
-                    %annotation('textbox',[.645 .55 .3 .3],'String',sprintf('%s %s',num2str(WindMag(i)),'m/s'),'FitBoxToText','on');
-                    
-                    %removedthis
-                    if(i<=(animateTailLength+1))
-                        pH1 = patch(ax2,'XData',xAnim1(1:i),'YData',yAnim1(1:i),'ZData',zAnim1(1:i),'EdgeColor','r','FaceColor','none','LineWidth',animateTailWidth);
-                        pH2 = patch(ax2,'XData',xAnim1(i),'YData',yAnim1(i),'ZData',zAnim1(i),'Marker','o','MarkerSize',animateHeadSize,'MarkerFaceColor','red','MarkerEdgeColor','none');
-                    else
-                        pH1 = patch(ax2,'XData',[nan; xAnim1((i-animateTailLength):i)],'YData',[nan; yAnim1((i-animateTailLength):i)],'ZData',[nan; zAnim1((i-animateTailLength):i)],'EdgeColor','r','FaceColor','none','LineWidth',animateTailWidth);
-                        pH2 = patch(ax2,'XData',xAnim1(i),'YData',yAnim1(i),'ZData',zAnim1(i),'Marker','o','MarkerSize',animateHeadSize,'MarkerFaceColor','red','MarkerEdgeColor','none');
-                    end
-                    
-                    pause(1/(50)) %Pause and grab frame
-                    frame = getframe(gcf); %get frame
-                    writeVideo(animVid, frame);
-                    delete(findall(fig10,'type','annotation'));
-                    cla(ax2);
-                    
-                end
-                
-                close(animVid);
-            else
-                for i=1:animateSpeed:length(EW);
-                    
-                    c1=compass(ax1,[0 EW(i)],[limHigh NW(i)]);
-                    set(c1(1),'visible','off');
-                    labels = findall(ax1,'type','text');
-                    view(ax1, -90,90);
-                    set(ax1,'ydir','reverse');
-                    set(findall(ax1, 'String', '0'),'String', 'N');
-                    set(findall(ax1, 'String', '90'),'String', 'E');
-                    set(findall(ax1, 'String', '180'),'String', 'S');
-                    set(findall(ax1, 'String', '270'),'String', 'W');
-                    set(labels(3:6),'visible','off');
-                    set(labels(9:14),'visible','off');
                     
                     set(c1(2),'LineWidth',1.5,'color','red');
                     annotation('textbox',[.645 .55 .3 .3],'String',sprintf('%s %s',num2str(WindMag(i)),'m/s'),'FitBoxToText','on');
@@ -2560,105 +2675,14 @@ if(strcmpi(Single_Multi,'Single'))
                     end
                     
                     pause(1/(50)) %Pause and grab frame
-                    
-                    delete(findall(fig10,'type','annotation'));
-                    cla(ax2);
-                    
-                end
-            end
-        else
-            %% Animation Setup
-            
-            if(strcmpi(plotTitle,''))
-                plotTitle = 'Default';
-            end
-            WindSpacing = NKF2_table(1:5:end,:);
-            
-            if(height(GPS_table)<height(WindSpacing))
-                WindSpacing = WindSpacing(1:height(GPS_table),:);
-            else GPS_table = GPS_table(1:height(WindSpacing),:);
-            end
-            
-            Lat = table2array(GPS_table(:,6));
-            Long = table2array(GPS_table(:,7));
-            Alt = table2array(GPS_table(:,9));
-            minAlt = min(Alt);
-            if(minAlt<0)
-                Alt=Alt+abs(min(Alt));
-            elseif(minAlt>0)
-                Alt=Alt-min(Alt);
-            end
-            NW = table2array(WindSpacing(:,4));
-            EW = table2array(WindSpacing(:,5));
-            WindMag = round(table2array(WindSpacing(:,6)),1);
-            
-            limHigh = max(max(abs(EW),abs(NW)));
-            limLow = -limHigh;
-            
-            fig10 = figure(10);
-            fig10.Position=[130 130 800 600];
-            fig10.Resize = 'off';
-            
-            xAnim1=[nan;Long(:,1)];
-            yAnim1=[nan;Lat(:,1)];
-            zAnim1=[nan;Alt(:,1)];
-            
-            lx = length(xAnim1);
-            ly = length(yAnim1);
-            lz = length(zAnim1);
-            %% USGS Mapping Data
-    baseURL = "https://basemap.nationalmap.gov/ArcGIS/rest/services";
-    usgsURL = baseURL + "/BASEMAP/MapServer/tile/${z}/${y}/${x}";
-    basemaps = ["USGSImageryOnly" "USGSImageryTopo" "USGSTopo" "USGSShadedReliefOnly" "USGSHydroCached"];
-    displayNames = ["USGS Imagery" "USGS Topographic Imagery" "USGS Shaded Topographic Map" "USGS Shaded Relief" "USGS Hydrography"];
-    attribution = 'Credit: U.S. Geological Survey';
-            %% GPS Plot %%%%%%%%%%%%%
-            % GPS Plotting data
-            ax2 = geoaxes();
-            geobasemap('satellite')
-            basemapx = basemaps(2);
-            url = replace(usgsURL,"BASEMAP",basemapx);
-            view(ax2,2)
-            
-            if(strcmpi(plotTitle,'Default'))
-                plotTitle = baseNameNoExtDFL;
-            end
-            
-            t = title({plotTitle,' '},'Interpreter', 'none');
-            t.FontSize = 16;
-            
-            display('Beginning animation sequence');
-            %% Animation Function
-            if(strcmpi(recordAnimation,'Yes'));
-                open(animVid);
-                
-                for i=1:animateSpeed:length(EW);
-
-                    %annotation('textbox',[.645 .55 .3 .3],'String',sprintf('%s %s',num2str(WindMag(i)),'m/s'),'FitBoxToText','on');
-                    
-                    if(i<=(animateTailLength+1))
-                        hold on
-                        pH1 = geoplot(ax2,yAnim1(1:i),xAnim1(1:i),'r','LineWidth',animateTailWidth);
-                        pH2 = geoplot(ax2,yAnim1(i),xAnim1(i),'Marker','o','MarkerSize',animateHeadSize,'MarkerFaceColor','red','MarkerEdgeColor','none');
-                    else
-                        hold on
-                        pH1 = geoplot(ax2,[nan; yAnim1((i-animateTailLength):i)],[nan; xAnim1((i-animateTailLength):i)],'r','LineWidth',animateTailWidth);
-                        pH2 = geoplot(ax2,yAnim1(i),xAnim1(i),'Marker','o','MarkerSize',animateHeadSize,'MarkerFaceColor','red','MarkerEdgeColor','none');
-                    end
-                    
-                    geobasemap('satellite')
-                    geolimits([min(yAnim1)-.0005 max(yAnim1)+.0005],[min(xAnim1)-.0005 max(xAnim1)+.0005]);
-                    
-                    pause(1/(50)) %Pause and grab frame
                     frame = getframe(gcf); %get frame
-                    writeVideo(animVid, frame);
+                    writeVideo(myVideo, frame);
                     delete(findall(fig10,'type','annotation'));
                     cla(ax2);
-                    hold off
                     
                 end
                 
-                close(animVid);
+                close(myVideo);
             else
                 for i=1:animateSpeed:length(EW);
                     
@@ -3101,7 +3125,7 @@ else
                         
                         plot3(ax,finLat(1:jj,k),finLong(1:jj,k),finAlt(1:jj,k),'Color',Col,'LineWidth',.8);
                         plot3(ax,finLat(jj,k),finLong(jj,k),finAlt(jj,k),'LineStyle','none','Marker','o','MarkerSize',6,'MarkerFaceColor',Col,'MarkerEdgeColor',Col);
-                        
+
                     end
                     pause(.001);
                     frame = getframe(gcf);
@@ -3255,5 +3279,11 @@ else
     end
 end
 
-disp('All operations completed.');
+%% Functions 
 
+% make an fft function 
+
+%
+
+
+disp('All operations completed.');
