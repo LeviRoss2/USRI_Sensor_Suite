@@ -20,4 +20,5 @@ This repo is for all code sets supporting the 5 Hole Pitot Probe (5HP) and integ
 5) If iMet data is chosen, next file asked for will be iMet data logged from the an XQ (small) or XQ2 (large).
 6) If 5HP or TPH data is chosen, next file asked for will be MHP/TPH data logged from the teensy. This file will be vehicleName###.csv for example HERA002.csv.
    1) A promt will appear asking for 5HP used. If used probe is unknown or unlisted use probe 1. 
+   2) If mhpAvg is "Yes" an FFT graph will appear. Select the peak of the FFT graph, this should correspond to the orbit period. 
 7) Thats it! Output data will be inputFileName_Parsed.mat for the converted Pixhawk file, the TPH and iMet data will be inputFileName_Parsed_Sensor (ex: Sensor can be TPH, MHP, iMet, GPS, etc.)
