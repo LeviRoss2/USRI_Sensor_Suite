@@ -37,12 +37,13 @@
 %    * Quadcopter NKF1 imports untested 
 %    * Triple Animate Breaks
 %
-% Projects In Progress:
+% Projects In Progress/To Be Done:
 %    * Adding an FFT function and Option for 5HP data analysis
 %    * Removing IMU states from 5hp data 
+%    * Include Anemometer Options 
 %
 % Current Fig Count:
-%    * Single: 10 +1
+%    * Single: 11
 %    * Multi: 1
 
 %% Clear All Data
