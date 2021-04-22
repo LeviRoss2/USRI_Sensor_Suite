@@ -21,8 +21,6 @@
 %    * 5HP data gets averaged down to Kalman Filter Rates 
 %    * 5HP data has aircraft states removed for 3D wind vector
 %    * Added plots for Corrected 5HP data
-%    * Added a option to average 5HP data for windspeed (useful for
-%    racetracks, wind squares etc.)
 %    
 %
 % General Updates:
@@ -38,6 +36,8 @@
 %    * Triple Animate Breaks
 %
 % Projects In Progress/To Be Done:
+%    * Added a option to average 5HP data for windspeed (useful for
+%    racetracks, wind squares etc.)
 %    * Adding an FFT function and Option for 5HP data analysis
 %    * Removing IMU states from 5hp data 
 %    * Include Anemometer Options 
