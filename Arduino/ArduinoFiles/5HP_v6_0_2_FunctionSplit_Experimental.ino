@@ -18,12 +18,12 @@
 
 /////////// SET VALUES HERE ////////////////////////
 
-#define Pixhawk true // true for MavLink message parsing
-#define TPH true  // true for Temp and Humidity calcs
-#define MHP true  // true for 5HP data collection
-#define USB false // true for full serial output, false for no serial output (Serial.print(), etc.)
-#define ARM_CHK true // Disable/enable arming check before logging starts
-#define YoungAnem false // Disable/enable Young 81000 Anemometer data logging
+#define Pixhawk false // true for MavLink message parsing
+#define TPH false  // true for Temp and Humidity calcs
+#define MHP false  // true for 5HP data collection
+#define USB true // true for full serial output, false for no serial output (Serial.print(), etc.)
+#define ARM_CHK false // Disable/enable arming check before logging starts
+#define YoungAnem true // Disable/enable Young 81000 Anemometer data logging
 
 int FHP_freq = 200; // Hz | MAX: 200, MIN: 2 | Five Hole Probe refresh rate
 int SS_freq = 2;   // Hz | MAX: 20, MIN: 2 | Sensor Suite refresh rate
@@ -70,7 +70,7 @@ char filename[12]; // Stores the name of the resulting log file
 char tDspeed[7];
 char wind_ang[6];
 char wind_ele[6];
-char SpSound[7];
+char SoS[7];
 char tempAnem[8];
 
 int Time = millis();
@@ -238,7 +238,6 @@ void setup(void) {
     while (GPS_stat[0] < 3) {
       GPS_receive();
       if (oldTime >= 1000) {
-        Serial.println("Waiting for GPS connect...");
         digitalWrite(led, !digitalRead(led));
         oldTime = oldTime - 1000;
       }
@@ -248,7 +247,6 @@ void setup(void) {
     while (PixTime[0] < 5) {
       MavLink_receive();
       if (oldTime >= 500) {
-        Serial.println("Waiting for valid Unix timestamp from GPS");
         digitalWrite(led, !digitalRead(led));
         oldTime = oldTime - 500;
       }
@@ -370,7 +368,6 @@ void setup(void) {
       while (armed < 1) {
         Arming_Check();
         if (oldTime >= 250) {
-          Serial.println("Waiting to arm");
           digitalWrite(led, !digitalRead(led));
           oldTime = oldTime - 250;
         }
@@ -417,48 +414,48 @@ void loop() {
   file.print((String)' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',');
 #endif
 
-//#if YoungAnem == true
-//  if ((Time - YAlast) >= YAiter) {
-//    YAlast = Time;
-//    YAcount++;
-//    YoungAnemometer();
-//  } else {
-//    file.print((String)' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',');
-//  }
-//
-//#else
-//  file.print((String)' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',');
-//#endif
-
-#if Pixhawk == true
-  MavLink_receive();
-
-  if (PixTime[1] > oldPixTime) {
-    file.print(PixTime[0]);
-    file.print(',');
-    file.print(PixTime[1]);
-    file.print(',');
-    oldPixTime = PixTime[1];
+#if YoungAnem == true
+  if ((Time - YAlast) >= YAiter) {
+    YAlast = Time;
+    YAcount++;
+    YoungAnemometer();
+  } else {
+    file.print((String)' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',');
   }
-  else {
-    file.print((String)' ' + ',' + ' ' + ',');
-  }
+
 #else
-  file.print((String)' ' + ',' + ' ' + ',');
+  file.print((String)' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',' + ' ' + ',');
 #endif
+
+//#if Pixhawk == true
+//  MavLink_receive();
+//
+//  if (PixTime[1] > oldPixTime) {
+//    file.print(PixTime[0]);
+//    file.print(',');
+//    file.print(PixTime[1]);
+//    file.print(',');
+//    oldPixTime = PixTime[1];
+//  }
+//  else {
+//    file.print((String)' ' + ',' + ' ' + ',');
+//  }
+//#else
+//  file.print((String)' ' + ',' + ' ' + ',');
+//#endif
 
   file.println();
   file.close();
 
-  #if USB == true
-  if ((Time - last_tot) >= 1000) {
-    Serial.println(); Serial.print("SS count: "); Serial.println(SScount); Serial.print("FHP count: "); Serial.println(FHPcount);
-    Serial.println();
-    last_tot = Time;
-    SScount = 0;
-    FHPcount = 0;
-  }
-  #endif
+  //#if USB == true
+//  if ((Time - last_tot) >= 1000) {
+//    Serial.println(); Serial.print("SS count: "); Serial.println(SScount); Serial.print("FHP count: "); Serial.println(FHPcount);
+//    Serial.println();
+//    last_tot = Time;
+//    SScount = 0;
+//    FHPcount = 0;
+//  }
+  //#endif
 
 }
 
@@ -497,114 +494,113 @@ void mhpCheck() {
   }
 }
 
-//void YoungAnemometer() {
-//  static boolean recvInProgress = false;
-//  int i = 0;
-//  static byte index = 0;
-//  char startMarker = (char)13;
-//  char endMarker = (char)13;
-//  boolean newData = false;
-//  char rc;
-//  const byte numChars = 35;
-//  char from_Anemo[numChars];
-//
-//  while (Serial1.available() > 0 && newData == false)
-//  {
-//    rc = Serial1.read();
-//    if (recvInProgress == true)
-//    {
-//      if (rc != endMarker && rc != '\0')
-//      {
-//        from_Anemo[index] = rc;
-//        index++;
-//        if (index >= numChars)
-//        {
-//          index = numChars - 1;
-//        }
-//      }
-//      else if (rc == endMarker)
-//      {
-//        if (index < numChars)
-//        {
-//          for (int i = index; i < numChars; i++) {
-//            from_Anemo[i] = (char)0;
-//          }
-//          index = i;
-//        }
-//        from_Anemo[index] = '\0'; // terminate the string
-//        recvInProgress = false;
-//
-//        index = 0;
-//        newData = true;
-//      }
-//    }
-//    else if (rc == startMarker)
-//    {
-//      recvInProgress = true;
-//    }
-//  }
-//
-//  if (newData == true)
-//  {
-//    unsigned char ii = 0;
-//    unsigned char jj = 0;
-//    unsigned char k = 0;
-//    unsigned char s = 0;
-//    unsigned char e = 0;
-//
-//    newData = false;
-//
-//#if USB == true
-//    Serial.print("from_Anemo: ");
-//    Serial.println(from_Anemo);
-//#endif
-//
-//    for (int ii = 0; ii < sizeof(from_Anemo) - 1; ii++)
-//    {
-//      if (ii == 0)
-//      {
-//        for ( int jj = 0; jj < sizeof(tDspeed); jj++) {
-//          tDspeed[jj] = from_Anemo[jj + ii];
-//        }
-//      }
-//      if (ii == 8) {
-//        for ( int jj = 0; jj < sizeof(wind_ang); jj++) {
-//          wind_ang[jj] = from_Anemo[jj + ii];
-//        }
-//      }
-//      if (ii == 13) {
-//        for ( int jj = 0; jj < sizeof(wind_ele); jj++) {
-//          wind_ele[jj] = from_Anemo[jj + ii];
-//        }
-//      }
-//      if (ii == 19) {
-//        for ( int jj = 0; jj < sizeof(SpSound); jj++) {
-//          SpSound[jj] = from_Anemo[jj + ii];
-//        }
-//      }
-//      if (ii == 26) {
-//        for ( int jj = 0; jj < sizeof(tempAnem)-1; jj++) {
-//          tempAnem[jj] = from_Anemo[jj + ii];
-//          if (jj == sizeof(tempAnem)) {
-//            tempAnem[jj] = '\0';
-//            break;
-//          }
-//        }
-//      }
-//    }
-//#if USB == true
-//      Serial.print(String(" | "));
-//      Serial.print(String("Wind Speed: ") + tDspeed + String(" | "));
-//      Serial.print(String("Angle: ") + wind_ang + String(" | "));
-//      Serial.print(String("elevation:  ") + wind_ele + String(" | "));
-//      Serial.print(String("Speed of Sound: ") + SpSound + String(" | "));
-//      Serial.println(String("temperature: " ) + tempAnem + String(" | "));
-//#endif
-//
-//file.print(tDspeed + String(',') + wind_ang + String(',') + wind_ele + String(',') + SpSound + String(',') + tempAnem + String(','));
-//    
-//  }
-//}
+void YoungAnemometer() {
+  static boolean recvInProgress = false;
+  int i = 0;
+  static byte index = 0;
+  char startMarker = (char)13;
+  char endMarker = (char)13;
+  boolean newData = false;
+  char rc;
+  const byte numChars = 35;
+  char from_Anemo[numChars];
+
+  while (Serial2.available() > 0 && newData == false)
+  {
+    rc = Serial2.read();
+    if (recvInProgress == true)
+    {
+      if (rc != endMarker && rc != '\0')
+      {
+        from_Anemo[index] = rc;
+        index++;
+        if (index >= numChars)
+        {
+          index = numChars - 1;
+        }
+      }
+      else if (rc == endMarker)
+      {
+        if (index < numChars)
+        {
+          for (int i = index; i < numChars; i++) {
+            from_Anemo[i] = (char)0;
+          }
+          index = i;
+        }
+        from_Anemo[index] = '\0'; // terminate the string
+        recvInProgress = false;
+
+        index = 0;
+        newData = true;
+      }
+    }
+    else if (rc == startMarker)
+    {
+      recvInProgress = true;
+    }
+  }
+
+  if (newData == true)
+  {
+    unsigned char ii = 0;
+    unsigned char jj = 0;
+    unsigned char k = 0;
+    unsigned char s = 0;
+    unsigned char e = 0;
+
+    newData = false;
+
+#if USB == true
+    Serial.print("from_Anemo: ");
+    Serial.println(from_Anemo);
+#endif
+
+    for (int ii = 0; ii < sizeof(from_Anemo) - 1; ii++)
+    {
+      if (ii == 0)
+      {
+        for ( int jj = 0; jj < sizeof(tDspeed); jj++) {
+          tDspeed[jj] = from_Anemo[jj + ii];
+        }
+      }
+      if (ii == 8) {
+        for ( int jj = 0; jj < sizeof(wind_ang); jj++) {
+          wind_ang[jj] = from_Anemo[jj + ii];
+        }
+      }
+      if (ii == 13) {
+        for ( int jj = 0; jj < sizeof(wind_ele); jj++) {
+          wind_ele[jj] = from_Anemo[jj + ii];
+        }
+      }
+      if (ii == 19) {
+        for ( int jj = 0; jj < sizeof(SoS); jj++) {
+          SoS[jj] = from_Anemo[jj + ii];
+        }
+      }
+      if (ii == 26) {
+        for ( int jj = 0; jj < sizeof(tempAnem)-1; jj++) {
+          tempAnem[jj] = from_Anemo[jj + ii];
+          if (jj == sizeof(tempAnem)) {
+            tempAnem[jj] = '\0';
+            break;
+          }
+        }
+      }
+#if USB == true
+      Serial.print(String(" | "));
+      Serial.print(String("Wind Speed: ") + tDspeed + String(" | "));
+      Serial.print(String("Angle: ") + wind_ang + String(" | "));
+      Serial.print(String("elevation:  ") + wind_ele + String(" | "));
+      Serial.print(String("Speed of Sound: ") + SoS + String(" | "));
+      Serial.println(String("temperature: " ) + tempAnem + String(" | "));
+#endif
+
+file.print(tDspeed + String(',') + wind_ang + String(',') + wind_ele + String(',') + SoS + String(',') + tempAnem + String(','));
+    }
+  }
+}
 
 void tphCheck() {
 
@@ -642,10 +638,13 @@ void tphCheck() {
     humidity[i] = (humidity[i] + humidity_ant[i]) / 2;
     humidity_ant[i] = humidity[i];
 
+#if USB == true
+    Serial.println((String) "TH" + i + ": " + temperature[i] + ", " + "HH" + i + ": " + humidity_ant[i] + ", " + 'T' + i + ": " + temperature_ant[i] +  ", " + 'V' + i + ": " + volt);
+#endif
 
-    #if USB == true
-          Serial.print((String) temperature[i] + ',' + humidity_ant[i] + ',' + temperature_ant[i] + ',' + volt + ',');
-    #endif
+    //#if USB == true
+    //      Serial.print((String) temperature[i] + ',' + humidity_ant[i] + ',' + temperature_ant[i] + ',' + volt + ',');
+    //#endif
     file.print((String) temperature[i] + ',' + humidity_ant[i] + ',' + temperature_ant[i] + ',' + volt + ',');
   }
 #if USB == true
@@ -653,117 +652,117 @@ void tphCheck() {
 #endif
 
 }
-
-//function called by arduino to read any MAVlink messages sent by serial communication from flight controller to arduino
-uint32_t* GPS_receive()
-{
-  mavlink_message_t msg;
-  mavlink_status_t status;
-
-  while (Serial1.available())
-  {
-    uint8_t c = Serial1.read();
-
-    //Get new message
-    if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status))
-    {
-
-      //Handle new message from autopilot
-      switch (msg.msgid)
-      {
-
-        case MAVLINK_MSG_ID_GPS_RAW_INT:  // #27: RAW_IMU
-          {
-            /* Message decoding: PRIMITIVE
-                  static inline void mavlink_msg_raw_imu_decode(const mavlink_message_t* msg, mavlink_raw_imu_t* raw_imu)
-            */
-            mavlink_gps_raw_int_t gps_raw_int;
-            mavlink_msg_gps_raw_int_decode(&msg, &gps_raw_int);
-
-            GPS_stat[0] = gps_raw_int.fix_type;
-
-            return GPS_stat;
-
-
-          }
-          break;
-      }
-    }
-  }
-}
-
-//function called by arduino to read any MAVlink messages sent by serial communication from flight controller to arduino
-bool Arming_Check()
-{
-  mavlink_message_t msg;
-  mavlink_status_t status;
-
-  while (Serial1.available())
-  {
-    uint8_t c = Serial1.read();
-
-    //Get new message
-    if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status))
-    {
-
-      //Handle new message from autopilot
-      switch (msg.msgid)
-      {
-
-        case MAVLINK_MSG_ID_HEARTBEAT:  // #0: Heartbeat
-          {
-
-            mavlink_heartbeat_t heartbeat;
-            mavlink_msg_heartbeat_decode(&msg, &heartbeat);
-
-            armed = ((heartbeat.base_mode & MAV_MODE_FLAG_SAFETY_ARMED) ? true : false);
-
-          }
-          break;
-      }
-    }
-  }
-}
-
-//function called by arduino to read any MAVlink messages sent by serial communication from flight controller to arduino
-uint32_t* MavLink_receive()
-{
-  mavlink_message_t msg;
-  mavlink_status_t status;
-
-  while (Serial1.available())
-  {
-    uint8_t c = Serial1.read();
-
-    //Get new message
-    if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status))
-    {
-
-      //Handle new message from autopilot
-      switch (msg.msgid)
-      {
-
-        case MAVLINK_MSG_ID_SYSTEM_TIME:  // #27: RAW_IMU
-          {
-            /* Message decoding: PRIMITIVE
-                  static inline void mavlink_msg_raw_imu_decode(const mavlink_message_t* msg, mavlink_raw_imu_t* raw_imu)
-            */
-            mavlink_system_time_t system_time;
-            mavlink_msg_system_time_decode(&msg, &system_time);
-
-            uint64_t Ptime = system_time.time_unix_usec;
-            PixTime[0] = Ptime / 1000000;
-            PixTime[1] = system_time.time_boot_ms;
-
-            return PixTime;
-
-
-          }
-          break;
-      }
-    }
-  }
-}
+//
+////function called by arduino to read any MAVlink messages sent by serial communication from flight controller to arduino
+//uint32_t* GPS_receive()
+//{
+//  mavlink_message_t msg;
+//  mavlink_status_t status;
+//
+//  while (Serial1.available())
+//  {
+//    uint8_t c = Serial1.read();
+//
+//    //Get new message
+//    if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status))
+//    {
+//
+//      //Handle new message from autopilot
+//      switch (msg.msgid)
+//      {
+//
+//        case MAVLINK_MSG_ID_GPS_RAW_INT:  // #27: RAW_IMU
+//          {
+//            /* Message decoding: PRIMITIVE
+//                  static inline void mavlink_msg_raw_imu_decode(const mavlink_message_t* msg, mavlink_raw_imu_t* raw_imu)
+//            */
+//            mavlink_gps_raw_int_t gps_raw_int;
+//            mavlink_msg_gps_raw_int_decode(&msg, &gps_raw_int);
+//
+//            GPS_stat[0] = gps_raw_int.fix_type;
+//
+//            return GPS_stat;
+//
+//
+//          }
+//          break;
+//      }
+//    }
+//  }
+//}
+//
+////function called by arduino to read any MAVlink messages sent by serial communication from flight controller to arduino
+//bool Arming_Check()
+//{
+//  mavlink_message_t msg;
+//  mavlink_status_t status;
+//
+//  while (Serial1.available())
+//  {
+//    uint8_t c = Serial1.read();
+//
+//    //Get new message
+//    if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status))
+//    {
+//
+//      //Handle new message from autopilot
+//      switch (msg.msgid)
+//      {
+//
+//        case MAVLINK_MSG_ID_HEARTBEAT:  // #0: Heartbeat
+//          {
+//
+//            mavlink_heartbeat_t heartbeat;
+//            mavlink_msg_heartbeat_decode(&msg, &heartbeat);
+//
+//            armed = ((heartbeat.base_mode & MAV_MODE_FLAG_SAFETY_ARMED) ? true : false);
+//
+//          }
+//          break;
+//      }
+//    }
+//  }
+//}
+//
+////function called by arduino to read any MAVlink messages sent by serial communication from flight controller to arduino
+//uint32_t* MavLink_receive()
+//{
+//  mavlink_message_t msg;
+//  mavlink_status_t status;
+//
+//  while (Serial1.available())
+//  {
+//    uint8_t c = Serial1.read();
+//
+//    //Get new message
+//    if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status))
+//    {
+//
+//      //Handle new message from autopilot
+//      switch (msg.msgid)
+//      {
+//
+//        case MAVLINK_MSG_ID_SYSTEM_TIME:  // #27: RAW_IMU
+//          {
+//            /* Message decoding: PRIMITIVE
+//                  static inline void mavlink_msg_raw_imu_decode(const mavlink_message_t* msg, mavlink_raw_imu_t* raw_imu)
+//            */
+//            mavlink_system_time_t system_time;
+//            mavlink_msg_system_time_decode(&msg, &system_time);
+//
+//            uint64_t Ptime = system_time.time_unix_usec;
+//            PixTime[0] = Ptime / 1000000;
+//            PixTime[1] = system_time.time_boot_ms;
+//
+//            return PixTime;
+//
+//
+//          }
+//          break;
+//      }
+//    }
+//  }
+//}
 
 /***************************************reads a humidity semsor *******************************/
 bool readSensor(int addr, int sensor_num, double * temp, double * humi)
